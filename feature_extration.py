@@ -1,19 +1,12 @@
 from pathlib import Path
-
 import mglearn as mglearn
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from nltk.corpus import stopwords
-from sklearn.datasets import make_blobs
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import StandardScaler
-from wordcloud import WordCloud, STOPWORDS
-from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
-
+from sklearn.neighbors import KNeighborsClassifier
+from wordcloud import WordCloud, STOPWORDS
 from classification_algorithms import load_data
 
 
@@ -28,13 +21,13 @@ def bag_of_words_vizualizer():
     # Представление через WordCloud
     corpus = get_corpus(df_a['ABSTRACT'].values)
     procWordCloud = get_wordCloud(corpus)
-    plt.figure(figsize=(20, 8))
+    plt.figure(figsize=(5, 5))
     plt.subplot(1, 2, 1)
     plt.imshow(procWordCloud)
     plt.axis('off')
     plt.subplot(1, 2, 1)
 
-    vectorizer = CountVectorizer(ngram_range=(1, 1), max_features=2000, min_df=5, max_df=0.7,
+    vectorizer = CountVectorizer(ngram_range=(1, 3), max_features=200, min_df=5, max_df=0.7,
                                  stop_words=stopwords.words('english'))
     X_physics = vectorizer.fit_transform(df_a["ABSTRACT"])
     count_vect_df = pd.DataFrame(X_physics.todense(), columns=vectorizer.get_feature_names_out(), index=df_a.index)
@@ -64,8 +57,8 @@ def get_corpus(data):
 def get_wordCloud(corpus):
     wordCloud = WordCloud(background_color='white',
                           stopwords=STOPWORDS,
-                          width=3000,
-                          height=3000,
+                          width=2000,
+                          height=2000,
                           max_words=200,
                           random_state=42
                           ).generate(str_corpus(corpus))

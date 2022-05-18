@@ -1,5 +1,4 @@
 from pathlib import Path
-
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -9,9 +8,11 @@ from sklearn.metrics import confusion_matrix, roc_curve
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.naive_bayes import BernoulliNB, GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import RobustScaler, StandardScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
+MAX_FEATURES = 100
+NGRAM = (1, 3)
 
 def load_data():
     work_path = Path.cwd()
@@ -25,7 +26,7 @@ def k_neighbors():
     # загрузка данных
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=(1, 3), min_df=10, max_df=0.7, max_features=1000)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -100,7 +101,7 @@ def random_forest():
     # загрузка данных
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=(1, 3), min_df=10, max_df=0.7, max_features=1000)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -120,7 +121,7 @@ def random_forest():
     print()
     # без скалирования
     print("Классификация без использования скалирования")
-    forest = RandomForestClassifier(random_state=42, max_features=200, n_estimators=10, n_jobs=4)
+    forest = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES, n_estimators=10, n_jobs=4)
     forest.fit(X_train, y_train)
     y_pred = forest.predict(X_test)
 
@@ -132,7 +133,7 @@ def random_forest():
 
     print("Классификация с использованием скалирования")
 
-    forest = RandomForestClassifier(random_state=42, max_features=200, n_estimators=10, n_jobs=4)
+    forest = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES, n_estimators=10, n_jobs=4)
     forest.fit(X_train_scaler, y_train)
     y_pred = forest.predict(X_test_scaler)
 
@@ -143,7 +144,7 @@ def random_forest():
     print()
 
     print("Поиск оптимальных значений")
-    rnd_frst = RandomForestClassifier(random_state=42, max_features="sqrt")
+    rnd_frst = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES)
     k_range = list([5, 10, 50, 100])
     param_grid = dict(n_estimators=k_range)
     grid = GridSearchCV(rnd_frst, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=-1)
@@ -155,7 +156,7 @@ def random_forest():
 
     plt.figure(figsize=(10, 10)).clf()
     for n in k_range:
-        classifier = RandomForestClassifier(n_estimators=n, random_state=42, max_features="sqrt", n_jobs=4)
+        classifier = RandomForestClassifier(n_estimators=n, random_state=42, max_features=MAX_FEATURES, n_jobs=4)
         classifier.fit(X_train_scaler, y_train)
         y_pred = classifier.predict(X_test_scaler)
 
@@ -178,7 +179,7 @@ def decision_tree():
     # загрузка данных
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=(1, 3), min_df=10, max_df=0.7, max_features=1000)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -198,7 +199,7 @@ def decision_tree():
     print()
     # без скалирования
     print("Классификация без использования скалирования")
-    dtree = DecisionTreeClassifier(random_state=42, max_features=200)
+    dtree = DecisionTreeClassifier(random_state=42, max_features=MAX_FEATURES)
     dtree.fit(X_train, y_train)
     y_pred = dtree.predict(X_test)
 
@@ -210,7 +211,7 @@ def decision_tree():
 
     print("Классификация с использованием скалирования")
 
-    dtree = DecisionTreeClassifier(random_state=42, max_features=200)
+    dtree = DecisionTreeClassifier(random_state=42, max_features=MAX_FEATURES)
     dtree.fit(X_train_scaler, y_train)
     y_pred = dtree.predict(X_test_scaler)
 
@@ -226,7 +227,7 @@ def naive_bayes_bernoulli():
     print("Классификация с помощью Наивного Байеса Бернулли\n")
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=(1, 3), min_df=10, max_df=0.7, max_features=1000)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -273,7 +274,7 @@ def naive_bayes_gaussian():
     print("Классификация с помощью Наивного Байеса Гаусса\n")
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=(1, 3), min_df=10, max_df=0.7, max_features=1000)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -320,7 +321,7 @@ def nb_compare():
     print("сравнение методов:")
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=(1, 3), min_df=10, max_df=0.7, max_features=2000)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -384,7 +385,7 @@ def bagging():
     # загрузка данных
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=(1, 3), min_df=10, max_df=0.7, max_features=1000)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -404,7 +405,7 @@ def bagging():
     print()
     # без скалирования
     print("Классификация без использования скалирования")
-    clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), n_estimators=10, random_state=42, max_features=200,
+    clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), n_estimators=10, random_state=42, max_features=MAX_FEATURES,
                             n_jobs=4)
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
@@ -418,7 +419,7 @@ def bagging():
     print("Классификация с использованием скалирования")
 
     clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), n_estimators=10, random_state=42,
-                            n_jobs=4, max_features=200)
+                            n_jobs=4, max_features=MAX_FEATURES)
     clf.fit(X_train_scaler, y_train)
     y_pred = clf.predict(X_test_scaler)
 
@@ -430,7 +431,7 @@ def bagging():
 
     print("Поиск оптимальных значений")
     clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), random_state=42,
-                            max_features=200)
+                            max_features=MAX_FEATURES)
     k_range = list([5, 10, 50, 100])
     param_grid = dict(n_estimators=k_range)
     grid = GridSearchCV(clf, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
@@ -443,7 +444,7 @@ def bagging():
     plt.figure(figsize=(10, 10)).clf()
     for n in k_range:
         clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), n_estimators=n, random_state=42,
-                                n_jobs=4, max_features=200)
+                                n_jobs=4, max_features=MAX_FEATURES)
         clf.fit(X_train_scaler, y_train)
         y_pred = clf.predict(X_test_scaler)
 
@@ -466,7 +467,7 @@ def ada_boost():
     # загрузка данных
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=(1, 3), min_df=10, max_df=0.7, max_features=1000)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -544,7 +545,7 @@ def gradient_boost():
     # загрузка данных
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=(1, 3), min_df=10, max_df=0.7, max_features=1000)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -564,7 +565,7 @@ def gradient_boost():
     print()
     # без скалирования
     print("Классификация без использования скалирования")
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=42, learning_rate=0.01, max_depth=2)
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=42, learning_rate=0.01, max_depth=4,max_features=MAX_FEATURES)
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
 
@@ -576,7 +577,7 @@ def gradient_boost():
 
     print("Классификация с использованием скалирования")
 
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=42, learning_rate=0.01, max_depth=2)
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=42, learning_rate=0.01, max_depth=2,max_features=MAX_FEATURES)
     clf.fit(X_train_scaler, y_train)
     y_pred = clf.predict(X_test_scaler)
 
@@ -586,11 +587,12 @@ def gradient_boost():
 
     print()
 
+
     print("Поиск оптимальных значений")
-    clf = GradientBoostingClassifier(random_state=42,max_features="sqrt")
-    k_range = list([2, 10, 50, 100])
+    clf = GradientBoostingClassifier(random_state=42,max_features=MAX_FEATURES)
+    k_range = list([2, 5, 10, 50, 100])
     kk_range = list([0.1, 0.5, 1.0])
-    kkk_range = list([2, 4, 6])
+    kkk_range = list([2, 4, 6, 8])
     param_grid = dict(n_estimators=k_range, learning_rate=kk_range, max_depth=kkk_range)
     grid = GridSearchCV(clf, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=-1)
     grid_search = grid.fit(X_train, y_train)
@@ -604,7 +606,7 @@ def gradient_boost():
         for m in [0.1, 0.5, 1.0]:
             for k in [2,4,6]:
                 clf = GradientBoostingClassifier(n_estimators=n, random_state=42, learning_rate=m, max_depth=k,
-                                                 max_features="sqrt")
+                                                 max_features=MAX_FEATURES)
                 clf.fit(X_train_scaler, y_train)
                 y_pred = clf.predict(X_test_scaler)
                 quality = confusion_matrix(y_test, y_pred)
