@@ -65,10 +65,10 @@ def k_neighbors():
     print()
 
     print("Поиск оптимальных значений")
-    knn = KNeighborsClassifier()
-    k_range = list(range(5, 106, 10))
+    knn = KNeighborsClassifier(algorithm="kd_tree")
+    k_range = list(range(1, 106, 10))
     param_grid = dict(n_neighbors=k_range)
-    grid = GridSearchCV(knn, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
+    grid = GridSearchCV(knn, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=-1)
     grid_search = grid.fit(X_train, y_train)
     print(grid_search)
     print(grid_search.best_params_)
@@ -76,8 +76,8 @@ def k_neighbors():
     print("Accuracy for our training dataset with tuning is : {:.2f}%".format(accuracy))
 
     plt.figure(figsize=(10, 10)).clf()
-    for n in range(20, 102, 20):
-        classifier = KNeighborsClassifier(n_neighbors=n)
+    for n in [1,2,5,10,25]:
+        classifier = KNeighborsClassifier(n_neighbors=n,algorithm="kd_tree")
         classifier.fit(X_train_scaler, y_train)
         y_pred = classifier.predict(X_test_scaler)
 
@@ -144,9 +144,9 @@ def random_forest():
 
     print("Поиск оптимальных значений")
     rnd_frst = RandomForestClassifier(random_state=42, max_features="sqrt")
-    k_range = list([2, 10, 50, 100])
+    k_range = list([5, 10, 50, 100])
     param_grid = dict(n_estimators=k_range)
-    grid = GridSearchCV(rnd_frst, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
+    grid = GridSearchCV(rnd_frst, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=-1)
     grid_search = grid.fit(X_train, y_train)
     print(grid_search)
     print(grid_search.best_params_)
@@ -431,7 +431,7 @@ def bagging():
     print("Поиск оптимальных значений")
     clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), random_state=42,
                             max_features=200)
-    k_range = list([2, 10, 50, 100])
+    k_range = list([5, 10, 50, 100])
     param_grid = dict(n_estimators=k_range)
     grid = GridSearchCV(clf, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
     grid_search = grid.fit(X_train, y_train)
@@ -510,7 +510,7 @@ def ada_boost():
 
     print("Поиск оптимальных значений")
     clf = AdaBoostClassifier(random_state=42)
-    k_range = list([2, 10, 50, 100])
+    k_range = list([5, 10, 50, 100])
     param_grid = dict(n_estimators=k_range)
     grid = GridSearchCV(clf, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
     grid_search = grid.fit(X_train, y_train)
@@ -600,7 +600,7 @@ def gradient_boost():
     print("Accuracy for our training dataset with tuning is : {:.2f}%".format(accuracy))
 
     plt.figure(figsize=(10, 10)).clf()
-    for n in [10,50,100]:
+    for n in [5, 10 ,50 ,100]:
         for m in [0.1, 0.5, 1.0]:
             for k in [2,4,6]:
                 clf = GradientBoostingClassifier(n_estimators=n, random_state=42, learning_rate=m, max_depth=k)

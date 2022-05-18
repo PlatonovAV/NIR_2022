@@ -2,7 +2,7 @@
 from clear_dataset import clear_data as step_1
 from classification_algorithms import k_neighbors, decision_tree, naive_bayes_bernoulli, naive_bayes_gaussian, \
     nb_compare, bagging, random_forest, ada_boost, gradient_boost
-from feature_extration import bag_of_words_vizualizer as step_3
+from feature_extration import bag_of_words_vizualizer as step_3, knn_vizualizer
 from unused_data_delete import unused_data_delete as step_2
 
 if __name__ == '__main__':
@@ -16,6 +16,7 @@ if __name__ == '__main__':
 
     print("Визуализация текстовых данных")
     step_3()
+    knn_vizualizer()
     print("Конец визуализации\n")
 
     print("Классификация методом k-ближайших соседей")
