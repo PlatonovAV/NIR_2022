@@ -587,7 +587,7 @@ def gradient_boost():
     print()
 
     print("Поиск оптимальных значений")
-    clf = GradientBoostingClassifier(random_state=42)
+    clf = GradientBoostingClassifier(random_state=42,max_features="sqrt")
     k_range = list([2, 10, 50, 100])
     kk_range = list([0.1, 0.5, 1.0])
     kkk_range = list([2, 4, 6])
@@ -603,7 +603,8 @@ def gradient_boost():
     for n in [5, 10 ,50 ,100]:
         for m in [0.1, 0.5, 1.0]:
             for k in [2,4,6]:
-                clf = GradientBoostingClassifier(n_estimators=n, random_state=42, learning_rate=m, max_depth=k)
+                clf = GradientBoostingClassifier(n_estimators=n, random_state=42, learning_rate=m, max_depth=k,
+                                                 max_features="sqrt")
                 clf.fit(X_train_scaler, y_train)
                 y_pred = clf.predict(X_test_scaler)
                 quality = confusion_matrix(y_test, y_pred)
