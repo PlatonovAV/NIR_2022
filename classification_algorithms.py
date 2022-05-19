@@ -103,7 +103,7 @@ def random_forest():
     # загрузка данных
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
+    vectorizer = TfidfVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
     pca = TSNE()
     X_df=     pca.fit_transform(X_df)
@@ -148,7 +148,7 @@ def random_forest():
 
     print("Поиск оптимальных значений")
     rnd_frst = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES)
-    k_range = list([5,10,50, 100])
+    k_range = list([5, 10, 50, 100])
     param_grid = dict(n_estimators=k_range)
     grid = GridSearchCV(rnd_frst, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
     grid_search = grid.fit(X_train, y_train)
