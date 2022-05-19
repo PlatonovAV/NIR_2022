@@ -2,8 +2,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier, AdaBoostClassifier, GradientBoostingClassifier
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.manifold import TSNE
 from sklearn.metrics import confusion_matrix, roc_curve
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.naive_bayes import BernoulliNB, GaussianNB
@@ -11,8 +13,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
-MAX_FEATURES = 100
-NGRAM = (1, 3)
+MAX_FEATURES = 200
+NGRAM = (1, 2)
 
 def load_data():
     work_path = Path.cwd()
@@ -103,7 +105,8 @@ def random_forest():
 
     vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
-
+    pca = TSNE()
+    X_df=     pca.fit_transform(X_df)
     # формирование тестовых выборок
     X_train, X_test, y_train, y_test = train_test_split(X_df, df_a['LABEL'], train_size=0.75, random_state=42)
     scaler = StandardScaler()
@@ -145,9 +148,9 @@ def random_forest():
 
     print("Поиск оптимальных значений")
     rnd_frst = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES)
-    k_range = list([5, 10, 50, 100])
+    k_range = list([5,10,50, 100])
     param_grid = dict(n_estimators=k_range)
-    grid = GridSearchCV(rnd_frst, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=-1)
+    grid = GridSearchCV(rnd_frst, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
     grid_search = grid.fit(X_train, y_train)
     print(grid_search)
     print(grid_search.best_params_)
