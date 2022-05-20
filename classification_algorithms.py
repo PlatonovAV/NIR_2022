@@ -1,3 +1,4 @@
+import timeit
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -13,8 +14,9 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
-MAX_FEATURES = 200
+MAX_FEATURES = 500
 NGRAM = (1, 2)
+
 
 def load_data():
     work_path = Path.cwd()
@@ -44,43 +46,49 @@ def k_neighbors():
     scaler = StandardScaler()
     scaler.fit(X_train)
 
+    s = timeit.default_timer()
     print("Классификация без использования скалирования")
-    classifier = KNeighborsClassifier(n_neighbors=100)
+    classifier = KNeighborsClassifier(n_neighbors=100,n_jobs=4)
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
 
     quality = confusion_matrix(y_test, y_pred)
     print('полнота', quality[0, 0] / sum(quality[0, :]))
     print('специфичность', quality[1, 1] / sum(quality[1, :]))
+    e = timeit.default_timer()
+    print("elapsed time:", e - s)
 
     print()
 
+    s = timeit.default_timer()
     print("Классификация с использованием скалирования")
     X_train_scaler = scaler.transform(X_train)
     X_test_scaler = scaler.transform(X_test)
-    classifier = KNeighborsClassifier(n_neighbors=100)
+    classifier = KNeighborsClassifier(n_neighbors=100,n_jobs=4)
     classifier.fit(X_train_scaler, y_train)
     y_pred = classifier.predict(X_test_scaler)
     quality = confusion_matrix(y_test, y_pred)
     print('полнота', quality[0, 0] / sum(quality[0, :]))
     print('специфичность', quality[1, 1] / sum(quality[1, :]))
+    e = timeit.default_timer()
+    print("elapsed time:", e - s)
 
     print()
 
     print("Поиск оптимальных значений")
-    knn = KNeighborsClassifier(algorithm="kd_tree")
-    k_range = list(range(1, 106, 10))
+    knn = KNeighborsClassifier(algorithm="ball_tree")
+    k_range = [2,5, 10, 20, 50, 100]
     param_grid = dict(n_neighbors=k_range)
-    grid = GridSearchCV(knn, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=-1)
-    grid_search = grid.fit(X_train, y_train)
+    grid = GridSearchCV(knn, param_grid, cv=3, scoring='roc_auc', verbose=4, return_train_score=True, n_jobs=-1)
+    grid_search = grid.fit(X_train_scaler, y_train)
     print(grid_search)
     print(grid_search.best_params_)
     accuracy = grid_search.best_score_ * 100
     print("Accuracy for our training dataset with tuning is : {:.2f}%".format(accuracy))
 
     plt.figure(figsize=(10, 10)).clf()
-    for n in [1,2,5,10,25]:
-        classifier = KNeighborsClassifier(n_neighbors=n,algorithm="kd_tree")
+    for n in k_range:
+        classifier = KNeighborsClassifier(n_neighbors=n, algorithm="kd_tree", n_jobs=4)
         classifier.fit(X_train_scaler, y_train)
         y_pred = classifier.predict(X_test_scaler)
 
@@ -103,10 +111,10 @@ def random_forest():
     # загрузка данных
     df_a = load_data()
 
-    vectorizer = TfidfVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
-    pca = TSNE()
-    X_df=     pca.fit_transform(X_df)
+    # pca = PCA()
+    # X_df=     pca.fit_transform(X_df)
     # формирование тестовых выборок
     X_train, X_test, y_train, y_test = train_test_split(X_df, df_a['LABEL'], train_size=0.75, random_state=42)
     scaler = StandardScaler()
@@ -123,6 +131,7 @@ def random_forest():
 
     print()
     # без скалирования
+    s = timeit.default_timer()
     print("Классификация без использования скалирования")
     forest = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES, n_estimators=10, n_jobs=4)
     forest.fit(X_train, y_train)
@@ -131,11 +140,12 @@ def random_forest():
     quality = confusion_matrix(y_test, y_pred)
     print('полнота', quality[0, 0] / sum(quality[0, :]))
     print('специфичность', quality[1, 1] / sum(quality[1, :]))
+    e = timeit.default_timer()
+    print("elapsed time:", e - s)
 
     print()
-
+    s = timeit.default_timer()
     print("Классификация с использованием скалирования")
-
     forest = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES, n_estimators=10, n_jobs=4)
     forest.fit(X_train_scaler, y_train)
     y_pred = forest.predict(X_test_scaler)
@@ -143,15 +153,16 @@ def random_forest():
     quality = confusion_matrix(y_test, y_pred)
     print('полнота', quality[0, 0] / sum(quality[0, :]))
     print('специфичность', quality[1, 1] / sum(quality[1, :]))
-
+    e = timeit.default_timer()
+    print("elapsed time:", e - s)
     print()
 
     print("Поиск оптимальных значений")
     rnd_frst = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES)
     k_range = list([5, 10, 50, 100])
     param_grid = dict(n_estimators=k_range)
-    grid = GridSearchCV(rnd_frst, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
-    grid_search = grid.fit(X_train, y_train)
+    grid = GridSearchCV(rnd_frst, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
+    grid_search = grid.fit(X_train_scaler, y_train)
     print(grid_search)
     print(grid_search.best_params_)
     accuracy = grid_search.best_score_ * 100
@@ -408,7 +419,8 @@ def bagging():
     print()
     # без скалирования
     print("Классификация без использования скалирования")
-    clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), n_estimators=10, random_state=42, max_features=MAX_FEATURES,
+    clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), n_estimators=10, random_state=42,
+                            max_features=MAX_FEATURES,
                             n_jobs=4)
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
@@ -437,8 +449,8 @@ def bagging():
                             max_features=MAX_FEATURES)
     k_range = list([5, 10, 50, 100])
     param_grid = dict(n_estimators=k_range)
-    grid = GridSearchCV(clf, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
-    grid_search = grid.fit(X_train, y_train)
+    grid = GridSearchCV(clf, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
+    grid_search = grid.fit(X_train_scaler, y_train)
     print(grid_search)
     print(grid_search.best_params_)
     accuracy = grid_search.best_score_ * 100
@@ -516,8 +528,8 @@ def ada_boost():
     clf = AdaBoostClassifier(random_state=42)
     k_range = list([5, 10, 50, 100])
     param_grid = dict(n_estimators=k_range)
-    grid = GridSearchCV(clf, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
-    grid_search = grid.fit(X_train, y_train)
+    grid = GridSearchCV(clf, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
+    grid_search = grid.fit(X_train_scaler, y_train)
     print(grid_search)
     print(grid_search.best_params_)
     accuracy = grid_search.best_score_ * 100
@@ -568,7 +580,8 @@ def gradient_boost():
     print()
     # без скалирования
     print("Классификация без использования скалирования")
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=42, learning_rate=0.01, max_depth=4,max_features=MAX_FEATURES)
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=42, learning_rate=0.01, max_depth=4,
+                                     max_features=MAX_FEATURES)
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
 
@@ -580,7 +593,8 @@ def gradient_boost():
 
     print("Классификация с использованием скалирования")
 
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=42, learning_rate=0.01, max_depth=2,max_features=MAX_FEATURES)
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=42, learning_rate=0.01, max_depth=2,
+                                     max_features=MAX_FEATURES)
     clf.fit(X_train_scaler, y_train)
     y_pred = clf.predict(X_test_scaler)
 
@@ -590,24 +604,23 @@ def gradient_boost():
 
     print()
 
-
     print("Поиск оптимальных значений")
-    clf = GradientBoostingClassifier(random_state=42,max_features=MAX_FEATURES)
-    k_range = list([2, 5, 10, 50, 100])
+    clf = GradientBoostingClassifier(random_state=42, max_features=MAX_FEATURES)
+    k_range = list([2, 10, 50, 100])
     kk_range = list([0.1, 0.5, 1.0])
     kkk_range = list([2, 4, 6, 8])
     param_grid = dict(n_estimators=k_range, learning_rate=kk_range, max_depth=kkk_range)
-    grid = GridSearchCV(clf, param_grid, cv=5, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=-1)
-    grid_search = grid.fit(X_train, y_train)
+    grid = GridSearchCV(clf, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=-1)
+    grid_search = grid.fit(X_train_scaler, y_train)
     print(grid_search)
     print(grid_search.best_params_)
     accuracy = grid_search.best_score_ * 100
     print("Accuracy for our training dataset with tuning is : {:.2f}%".format(accuracy))
 
     plt.figure(figsize=(10, 10)).clf()
-    for n in [5, 10 ,50 ,100]:
+    for n in [5, 10, 50, 100]:
         for m in [0.1, 0.5, 1.0]:
-            for k in [2,4,6]:
+            for k in [2, 4, 6]:
                 clf = GradientBoostingClassifier(n_estimators=n, random_state=42, learning_rate=m, max_depth=k,
                                                  max_features=MAX_FEATURES)
                 clf.fit(X_train_scaler, y_train)
@@ -621,7 +634,7 @@ def gradient_boost():
                 col = (np.random.random(), np.random.random(), np.random.random())
                 Roc_data = clf.predict_proba(X_test_scaler)
                 fpr_roc, tpr_roc, threshold_roc = roc_curve(y_test, Roc_data[:, 1], pos_label='Physics')
-                plt.plot(fpr_roc, tpr_roc, label='n= {},m= {}, k={}'.format(n,m,k), color=col)
+                plt.plot(fpr_roc, tpr_roc, label='n= {},m= {}, k={}'.format(n, m, k), color=col)
                 plt.plot((0.0, 1.0), (0.0, 1.0))
                 plt.xlabel('True Positive Rate')
                 plt.ylabel('False Positive Rate')

@@ -19,22 +19,36 @@ def bag_of_words_vizualizer():
     df_a.index.names = ["ID"]
 
     # Представление через WordCloud
-    corpus = get_corpus(df_a['ABSTRACT'].values)
-    procWordCloud = get_wordCloud(corpus)
-    plt.figure(figsize=(5, 5))
-    plt.subplot(1, 2, 1)
-    plt.imshow(procWordCloud)
-    plt.axis('off')
-    plt.subplot(1, 2, 1)
+    # corpus = get_corpus(df_a['ABSTRACT'].values)
+    #     procWordCloud = get_wordCloud(corpus)
+    #     plt.figure(figsize=(10, 10))
+    #     plt.subplot(1, 2, 1)
+    #     plt.imshow(procWordCloud)
+    #     plt.axis('off')
+    #     plt.subplot(1, 2, 1)
 
-    vectorizer = CountVectorizer(ngram_range=(1, 3), max_features=200, min_df=5, max_df=0.7,
-                                 stop_words=stopwords.words('english'))
+    vectorizer = CountVectorizer(ngram_range=(2, 3), max_features=500, min_df=0.01, max_df=0.7)
     X_physics = vectorizer.fit_transform(df_a["ABSTRACT"])
     count_vect_df = pd.DataFrame(X_physics.todense(), columns=vectorizer.get_feature_names_out(), index=df_a.index)
     count_vect_df = count_vect_df.T
     count_vect_df["TOTAL"] = count_vect_df.sum(axis=1)
     feature_names = np.array(vectorizer.get_feature_names_out())
     df_a_2 = pd.concat([df_a, count_vect_df], axis=1, join='inner')
+    dictionary=dict(zip(count_vect_df.index,count_vect_df["TOTAL"]))
+    wordCloud = WordCloud(background_color='white',
+                          stopwords=STOPWORDS,
+                          width=2000,
+                          height=2000,
+                          max_words=500,
+                          random_state=42
+                          ).generate_from_frequencies(dictionary)
+    plt.figure(figsize=(20, 20))
+    plt.subplot(1, 1, 1)
+    plt.imshow(wordCloud)
+    plt.axis('off')
+    plt.savefig('foo.png')
+
+
     mglearn.tools.visualize_coefficients(count_vect_df["TOTAL"], feature_names, n_top_features=20)
 
 
@@ -61,7 +75,7 @@ def get_wordCloud(corpus):
                           height=2000,
                           max_words=200,
                           random_state=42
-                          ).generate(str_corpus(corpus))
+                          ).generate_from_frequencies()
     return wordCloud
 
 
