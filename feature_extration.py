@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from nltk.corpus import stopwords
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.neighbors import KNeighborsClassifier
 from wordcloud import WordCloud, STOPWORDS
 from classification_algorithms import load_data
@@ -27,7 +27,7 @@ def bag_of_words_vizualizer():
     #     plt.axis('off')
     #     plt.subplot(1, 2, 1)
 
-    vectorizer = CountVectorizer(ngram_range=(2, 3), max_features=500, min_df=0.01, max_df=0.7)
+    vectorizer = TfidfVectorizer(ngram_range=(1, 1), max_features=10000, min_df=0.05, max_df=0.7)
     X_physics = vectorizer.fit_transform(df_a["ABSTRACT"])
     count_vect_df = pd.DataFrame(X_physics.todense(), columns=vectorizer.get_feature_names_out(), index=df_a.index)
     count_vect_df = count_vect_df.T
@@ -47,6 +47,19 @@ def bag_of_words_vizualizer():
     plt.imshow(wordCloud)
     plt.axis('off')
     plt.savefig('foo.png')
+
+    #     plt.figure(figsize=(20, 10))
+    #     plt.hist(count_vect_df["TOTAL"],20)
+    #     a = plt.figure(figsize=(20, 20))
+    #     bw=0.5
+    #     plt.bar(count_vect_df["TOTAL"].nlargest(40).index, count_vect_df["TOTAL"].nlargest(40),bw,color="green")
+    #     plt.xticks(ticks= range(len(count_vect_df["TOTAL"].nlargest(40).index)),labels= count_vect_df["TOTAL"].nlargest(40).index, rotation=90)
+    #     plt.bar(count_vect_df["TOTAL"].nlargest(40).index, count_vect_df["TOTAL"].nlargest(40),bw,color="red")
+    #     a = count_vect_df["TOTAL"].nlargest(40).plot("red")
+    #     b = count_vect_df["TOTAL"].nlargest(40).plot("green")
+    #     a.show()
+    #     b.show()
+
 
 
     mglearn.tools.visualize_coefficients(count_vect_df["TOTAL"], feature_names, n_top_features=20)
