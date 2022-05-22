@@ -1,3 +1,4 @@
+import timeit
 
 from clear_dataset import clear_data as step_1
 from classification_algorithms import k_neighbors, decision_tree, naive_bayes_bernoulli, naive_bayes_gaussian, \
@@ -6,6 +7,7 @@ from feature_extration import bag_of_words_vizualizer as step_3, knn_vizualizer
 from unused_data_delete import unused_data_delete as step_2
 
 if __name__ == '__main__':
+    start_time = timeit.default_timer()
     print("Первичная очистка текстовых данных начата")
     step_1()
     print("Очистка завершена\n")
@@ -51,3 +53,5 @@ if __name__ == '__main__':
 
     print("Классификация с использованием стекинга")
     print("Классификация завершена\n")
+    end_time = timeit.default_timer()
+    print("Время выполнения:", end_time)

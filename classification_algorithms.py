@@ -16,6 +16,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 MAX_FEATURES = 500
 NGRAM = (1, 2)
+N_JOBS = 6
 
 
 def load_data():
@@ -48,7 +49,7 @@ def k_neighbors():
 
     s = timeit.default_timer()
     print("Классификация без использования скалирования")
-    classifier = KNeighborsClassifier(n_neighbors=100,n_jobs=4)
+    classifier = KNeighborsClassifier(n_neighbors=100, n_jobs=N_JOBS)
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
 
@@ -64,7 +65,7 @@ def k_neighbors():
     print("Классификация с использованием скалирования")
     X_train_scaler = scaler.transform(X_train)
     X_test_scaler = scaler.transform(X_test)
-    classifier = KNeighborsClassifier(n_neighbors=100,n_jobs=4)
+    classifier = KNeighborsClassifier(n_neighbors=100, n_jobs=N_JOBS)
     classifier.fit(X_train_scaler, y_train)
     y_pred = classifier.predict(X_test_scaler)
     quality = confusion_matrix(y_test, y_pred)
@@ -77,9 +78,9 @@ def k_neighbors():
 
     print("Поиск оптимальных значений")
     knn = KNeighborsClassifier(algorithm="ball_tree")
-    k_range = [2,5, 10, 20, 50, 100]
+    k_range = [2, 5, 10, 20, 50, 100]
     param_grid = dict(n_neighbors=k_range)
-    grid = GridSearchCV(knn, param_grid, cv=3, scoring='roc_auc', verbose=4, return_train_score=True, n_jobs=-1)
+    grid = GridSearchCV(knn, param_grid, cv=3, scoring='roc_auc', verbose=4, return_train_score=True, n_jobs=N_JOBS)
     grid_search = grid.fit(X_train_scaler, y_train)
     print(grid_search)
     print(grid_search.best_params_)
@@ -88,7 +89,7 @@ def k_neighbors():
 
     plt.figure(figsize=(10, 10)).clf()
     for n in k_range:
-        classifier = KNeighborsClassifier(n_neighbors=n, algorithm="kd_tree", n_jobs=4)
+        classifier = KNeighborsClassifier(n_neighbors=n, algorithm="kd_tree", n_jobs=N_JOBS)
         classifier.fit(X_train_scaler, y_train)
         y_pred = classifier.predict(X_test_scaler)
 
@@ -133,7 +134,7 @@ def random_forest():
     # без скалирования
     s = timeit.default_timer()
     print("Классификация без использования скалирования")
-    forest = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES, n_estimators=10, n_jobs=4)
+    forest = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES, n_estimators=10, n_jobs=N_JOBS)
     forest.fit(X_train, y_train)
     y_pred = forest.predict(X_test)
 
@@ -146,7 +147,7 @@ def random_forest():
     print()
     s = timeit.default_timer()
     print("Классификация с использованием скалирования")
-    forest = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES, n_estimators=10, n_jobs=4)
+    forest = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES, n_estimators=10, n_jobs=N_JOBS)
     forest.fit(X_train_scaler, y_train)
     y_pred = forest.predict(X_test_scaler)
 
@@ -161,7 +162,8 @@ def random_forest():
     rnd_frst = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES)
     k_range = list([5, 10, 50, 100])
     param_grid = dict(n_estimators=k_range)
-    grid = GridSearchCV(rnd_frst, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
+    grid = GridSearchCV(rnd_frst, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True,
+                        n_jobs=N_JOBS)
     grid_search = grid.fit(X_train_scaler, y_train)
     print(grid_search)
     print(grid_search.best_params_)
@@ -170,7 +172,7 @@ def random_forest():
 
     plt.figure(figsize=(10, 10)).clf()
     for n in k_range:
-        classifier = RandomForestClassifier(n_estimators=n, random_state=42, max_features=MAX_FEATURES, n_jobs=4)
+        classifier = RandomForestClassifier(n_estimators=n, random_state=42, max_features=MAX_FEATURES, n_jobs=N_JOBS)
         classifier.fit(X_train_scaler, y_train)
         y_pred = classifier.predict(X_test_scaler)
 
@@ -421,7 +423,7 @@ def bagging():
     print("Классификация без использования скалирования")
     clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), n_estimators=10, random_state=42,
                             max_features=MAX_FEATURES,
-                            n_jobs=4)
+                            n_jobs=N_JOBS)
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
 
@@ -434,7 +436,7 @@ def bagging():
     print("Классификация с использованием скалирования")
 
     clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), n_estimators=10, random_state=42,
-                            n_jobs=4, max_features=MAX_FEATURES)
+                            n_jobs=N_JOBS, max_features=MAX_FEATURES)
     clf.fit(X_train_scaler, y_train)
     y_pred = clf.predict(X_test_scaler)
 
@@ -449,7 +451,7 @@ def bagging():
                             max_features=MAX_FEATURES)
     k_range = list([5, 10, 50, 100])
     param_grid = dict(n_estimators=k_range)
-    grid = GridSearchCV(clf, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
+    grid = GridSearchCV(clf, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=N_JOBS)
     grid_search = grid.fit(X_train_scaler, y_train)
     print(grid_search)
     print(grid_search.best_params_)
@@ -459,7 +461,7 @@ def bagging():
     plt.figure(figsize=(10, 10)).clf()
     for n in k_range:
         clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), n_estimators=n, random_state=42,
-                                n_jobs=4, max_features=MAX_FEATURES)
+                                max_features=MAX_FEATURES)
         clf.fit(X_train_scaler, y_train)
         y_pred = clf.predict(X_test_scaler)
 
@@ -606,11 +608,11 @@ def gradient_boost():
 
     print("Поиск оптимальных значений")
     clf = GradientBoostingClassifier(random_state=42, max_features=MAX_FEATURES)
-    k_range = list([2, 10, 50, 100])
-    kk_range = list([0.1, 0.5, 1.0])
-    kkk_range = list([2, 4, 6, 8])
+    k_range = list([2, 5, 10, 50, 100])
+    kk_range = list([0.1, 0, 2, 0.5, 1.0])
+    kkk_range = list([2, 4, 6, 8, 10, 20])
     param_grid = dict(n_estimators=k_range, learning_rate=kk_range, max_depth=kkk_range)
-    grid = GridSearchCV(clf, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=-1)
+    grid = GridSearchCV(clf, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=N_JOBS)
     grid_search = grid.fit(X_train_scaler, y_train)
     print(grid_search)
     print(grid_search.best_params_)
