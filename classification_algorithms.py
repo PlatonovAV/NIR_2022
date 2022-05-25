@@ -14,10 +14,10 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
-MAX_FEATURES = 500
-NGRAM = (1, 2)
+MAX_FEATURES = None
+NGRAM = (1, 1)
 N_JOBS = 6
-
+MIN_DF = 0.05
 
 def load_data():
     work_path = Path.cwd()
@@ -31,7 +31,7 @@ def k_neighbors():
     # загрузка данных
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=MIN_DF, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -112,10 +112,9 @@ def random_forest():
     # загрузка данных
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=MIN_DF, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
-    # pca = PCA()
-    # X_df=     pca.fit_transform(X_df)
+
     # формирование тестовых выборок
     X_train, X_test, y_train, y_test = train_test_split(X_df, df_a['LABEL'], train_size=0.75, random_state=42)
     scaler = StandardScaler()
@@ -160,7 +159,7 @@ def random_forest():
 
     print("Поиск оптимальных значений")
     rnd_frst = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES)
-    k_range = list([5, 10, 50, 100])
+    k_range = list([2, 5, 10, 20, 50, 100])
     param_grid = dict(n_estimators=k_range)
     grid = GridSearchCV(rnd_frst, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True,
                         n_jobs=N_JOBS)
@@ -195,7 +194,7 @@ def decision_tree():
     # загрузка данных
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=MIN_DF, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -243,7 +242,7 @@ def naive_bayes_bernoulli():
     print("Классификация с помощью Наивного Байеса Бернулли\n")
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=MIN_DF, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -290,7 +289,7 @@ def naive_bayes_gaussian():
     print("Классификация с помощью Наивного Байеса Гаусса\n")
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=MIN_DF, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -337,7 +336,7 @@ def nb_compare():
     print("сравнение методов:")
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=MIN_DF, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -401,7 +400,7 @@ def bagging():
     # загрузка данных
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=MIN_DF, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -484,7 +483,7 @@ def ada_boost():
     # загрузка данных
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=MIN_DF, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
@@ -562,7 +561,7 @@ def gradient_boost():
     # загрузка данных
     df_a = load_data()
 
-    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=10, max_df=0.7, max_features=MAX_FEATURES)
+    vectorizer = CountVectorizer(ngram_range=NGRAM, min_df=MIN_DF, max_df=0.7, max_features=MAX_FEATURES)
     X_df = vectorizer.fit_transform(df_a["ABSTRACT"]).toarray()
 
     # формирование тестовых выборок
