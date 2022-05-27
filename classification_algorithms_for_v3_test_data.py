@@ -38,8 +38,9 @@ def recall_specificity_scoring(df_a, scaler, clf):
         print()
     recal = recal / len(cv_results['test_tp'])
     specificit = specificit / len(cv_results['test_tp'])
-    print("******\n", recal, '\n', specificit, '\n*****\n')
+    print("******\n", "Полнота: ", recal, '\n','Специфичность: ', specificit, '\n*****\n')
     print(cv_results)
+
 
 def recall_specificity_scoring_no_scaler(df_a, clf):
     def confusion_matrix_scorer(clf, X, y):
@@ -48,7 +49,7 @@ def recall_specificity_scoring_no_scaler(df_a, clf):
         return {'tp': cm[0, 0], 'fn': cm[0, 1], 'fp': cm[1, 0], 'tn': cm[1, 1]}
 
     cv_results = cross_validate(clf.fit(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL']),
-                               (df_a.iloc[:, list(range(2, len(df_a.columns)))]), df_a["LABEL"],
+                                (df_a.iloc[:, list(range(2, len(df_a.columns)))]), df_a["LABEL"],
                                 scoring=confusion_matrix_scorer)
     recal = 0
     specificit = 0
@@ -60,7 +61,7 @@ def recall_specificity_scoring_no_scaler(df_a, clf):
         print()
     recal = recal / len(cv_results['test_tp'])
     specificit = specificit / len(cv_results['test_tp'])
-    print("******\n", recal, '\n', specificit, '\n*****\n')
+    print("******\n",'Полнота: ', recal, '\n', 'Срецифичность: ', specificit, '\n*****\n')
     print(cv_results)
 
 
@@ -242,7 +243,7 @@ def random_forest():
 
 def decision_tree():
     # загрузка данных
-    df_a = load_data('train_v3.csv')
+    df_a = load_data('train_v1.csv')
 
     # формирование тестовых выборок
     X_train, X_test, y_train, y_test = train_test_split(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'],
@@ -284,6 +285,18 @@ def decision_tree():
 
     print()
 
+    a_scaler = RobustScaler()
+    clf = DecisionTreeClassifier(random_state=42, max_features=MAX_FEATURES)
+    recall_specificity_scoring(df_a,a_scaler,clf)
+
+    col = (np.random.random(), np.random.random(), np.random.random())
+    Roc_data = dtree.predict_proba(X_test_scaler)
+    fpr_roc, tpr_roc, threshold_roc = roc_curve(y_test, Roc_data[:, 1], pos_label='Physics')
+    plt.plot(fpr_roc, tpr_roc, label='Набор униграмм', color=col)
+    plt.plot((0.0, 1.0), (0.0, 1.0))
+    plt.xlabel('True Positive Rate')
+    plt.ylabel('False Positive Rate')
+    plt.legend()
 
 def naive_bayes_bernoulli():
     # загрузка данных
@@ -348,6 +361,7 @@ def naive_bayes_bernoulli():
     clf = BernoulliNB(alpha=grid_search.best_params_['alpha'], binarize=grid_search.best_params_['binarize'])
     recall_specificity_scoring(df_a, scaler, clf)
 
+
 def naive_bayes_multinomial():
     # загрузка данных
     df_a = load_data('train_v1.csv')
@@ -405,7 +419,6 @@ def nb_compare():
     # формирование тестовых выборок
     X_train, X_test, y_train, y_test = train_test_split(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'],
                                                         train_size=0.75, random_state=42)
-
 
     print('количество объектов в тренировочной выборке:\n', y_train.value_counts(), "\n")
     print('количество объектов в тестовой выборке: \n', y_test.value_counts(), "\n")
