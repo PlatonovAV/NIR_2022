@@ -9,7 +9,7 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.manifold import TSNE
 from sklearn.metrics import confusion_matrix, roc_curve
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_validate
-from sklearn.naive_bayes import BernoulliNB, GaussianNB
+from sklearn.naive_bayes import BernoulliNB, GaussianNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.tree import DecisionTreeClassifier
@@ -17,6 +17,52 @@ from sklearn.tree import DecisionTreeClassifier
 MAX_FEATURES = None
 N_JOBS = 6
 MIN_DF = 0.01
+
+
+def recall_specificity_scoring(df_a, scaler, clf):
+    def confusion_matrix_scorer(clf, X, y):
+        y_pred = clf.predict(X)
+        cm = confusion_matrix(y, y_pred)
+        return {'tp': cm[0, 0], 'fn': cm[0, 1], 'fp': cm[1, 0], 'tn': cm[1, 1]}
+
+    cv_results = cross_validate(clf.fit(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL']),
+                                scaler.fit_transform(df_a.iloc[:, list(range(2, len(df_a.columns)))]), df_a["LABEL"],
+                                scoring=confusion_matrix_scorer)
+    recal = 0
+    specificit = 0
+    for n in range(len(cv_results['test_tp'])):
+        recal += cv_results['test_tp'][n] / (cv_results['test_tp'][n] + cv_results['test_fn'][n])
+        specificit += cv_results['test_tn'][n] / (cv_results['test_tn'][n] + cv_results['test_fp'][n])
+        print('полнота', cv_results['test_tp'][n] / (cv_results['test_tp'][n] + cv_results['test_fn'][n]))
+        print('специфичность', cv_results['test_tn'][n] / (cv_results['test_tn'][n] + cv_results['test_fp'][n]))
+        print()
+    recal = recal / len(cv_results['test_tp'])
+    specificit = specificit / len(cv_results['test_tp'])
+    print("******\n", recal, '\n', specificit, '\n*****\n')
+    print(cv_results)
+
+def recall_specificity_scoring_no_scaler(df_a, clf):
+    def confusion_matrix_scorer(clf, X, y):
+        y_pred = clf.predict(X)
+        cm = confusion_matrix(y, y_pred)
+        return {'tp': cm[0, 0], 'fn': cm[0, 1], 'fp': cm[1, 0], 'tn': cm[1, 1]}
+
+    cv_results = cross_validate(clf.fit(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL']),
+                               (df_a.iloc[:, list(range(2, len(df_a.columns)))]), df_a["LABEL"],
+                                scoring=confusion_matrix_scorer)
+    recal = 0
+    specificit = 0
+    for n in range(len(cv_results['test_tp'])):
+        recal += cv_results['test_tp'][n] / (cv_results['test_tp'][n] + cv_results['test_fn'][n])
+        specificit += cv_results['test_tn'][n] / (cv_results['test_tn'][n] + cv_results['test_fp'][n])
+        print('полнота', cv_results['test_tp'][n] / (cv_results['test_tp'][n] + cv_results['test_fn'][n]))
+        print('специфичность', cv_results['test_tn'][n] / (cv_results['test_tn'][n] + cv_results['test_fp'][n]))
+        print()
+    recal = recal / len(cv_results['test_tp'])
+    specificit = specificit / len(cv_results['test_tp'])
+    print("******\n", recal, '\n', specificit, '\n*****\n')
+    print(cv_results)
+
 
 def load_data(txt):
     work_path = Path.cwd()
@@ -31,7 +77,8 @@ def k_neighbors(txt):
     df_a = load_data('train_v1.csv')
 
     # формирование тестовых выборок
-    X_train, X_test, y_train, y_test = train_test_split(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'], train_size=0.75, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'],
+                                                        train_size=0.75, random_state=42)
 
     print('количество объектов в тренировочной выборке:\n', y_train.value_counts(), "\n")
     print('количество объектов в тестовой выборке: \n', y_test.value_counts(), "\n")
@@ -45,7 +92,7 @@ def k_neighbors(txt):
 
     s = timeit.default_timer()
     print("Классификация без использования скалирования")
-    classifier = KNeighborsClassifier( n_jobs=N_JOBS)
+    classifier = KNeighborsClassifier(n_jobs=N_JOBS)
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
 
@@ -61,7 +108,7 @@ def k_neighbors(txt):
     print("Классификация с использованием скалирования")
     X_train_scaler = scaler.transform(X_train)
     X_test_scaler = scaler.transform(X_test)
-    classifier = KNeighborsClassifier( n_jobs=N_JOBS)
+    classifier = KNeighborsClassifier(n_jobs=N_JOBS)
     classifier.fit(X_train_scaler, y_train)
     y_pred = classifier.predict(X_test_scaler)
     quality = confusion_matrix(y_test, y_pred)
@@ -74,36 +121,17 @@ def k_neighbors(txt):
     # plt.show()
     print()
 
-
-    def confusion_matrix_scorer(clf, X, y):
-        y_pred = clf.predict(X)
-        cm = confusion_matrix(y, y_pred)
-        return {'tp': cm[0, 0], 'fn': cm[0, 1],'fp': cm[1, 0], 'tn': cm[1, 1]}
-
-    clf = KNeighborsClassifier(n_neighbors=300,n_jobs=N_JOBS,algorithm='kd_tree')
-    cv_results = cross_validate(clf.fit(df_a.iloc[:, list(range(2, len(df_a.columns)))],df_a['LABEL']),
-                                scaler.fit_transform(df_a.iloc[:, list(range(2, len(df_a.columns)))]),df_a["LABEL"],
-                                scoring=confusion_matrix_scorer)
-    recal=0
-    specificit=0
-    for n in range(len(cv_results['test_tp'])):
-        recal+=cv_results['test_tp'][n] / (cv_results['test_tp'][n]+cv_results['test_fn'][n])
-        specificit+=cv_results['test_tn'][n] / (cv_results['test_tn'][n]+cv_results['test_fp'][n])
-        print('полнота', cv_results['test_tp'][n] / (cv_results['test_tp'][n]+cv_results['test_fn'][n]))
-        print('специфичность', cv_results['test_tn'][n] / (cv_results['test_tn'][n]+cv_results['test_fp'][n]))
-        print()
-    recal = recal/len(cv_results['test_tp'])
-    specificit = specificit/len(cv_results['test_tp'])
-    print("******\n",recal,'\n',specificit,'\n*****\n')
-    print(cv_results)
+    clf = KNeighborsClassifier(n_neighbors=300, algorithm='kd_tree', n_jobs=-1)
+    recall_specificity_scoring(df_a, scaler, clf)
 
     print("Поиск оптимальных значений")
     knn = KNeighborsClassifier(algorithm="ball_tree")
-    a_scaler=RobustScaler()
-    k_range = [10, 20, 50, 100, 150, 200, 250, 300,400]
-    k_alg=['ball_tree','kd_tree','brute']
-    param_grid = dict(n_neighbors=k_range,algorithm=k_alg)
-    grid = GridSearchCV(knn, param_grid, cv=5, scoring='balanced_accuracy', verbose=4, return_train_score=True, n_jobs=N_JOBS)
+    a_scaler = RobustScaler()
+    k_range = [10, 20, 50, 100, 150, 200, 250, 300, 400]
+    k_alg = ['ball_tree', 'kd_tree', 'brute']
+    param_grid = dict(n_neighbors=k_range, algorithm=k_alg)
+    grid = GridSearchCV(knn, param_grid, cv=5, scoring='balanced_accuracy', verbose=4, return_train_score=True,
+                        n_jobs=N_JOBS)
     grid_search = grid.fit(a_scaler.fit_transform(df_a.iloc[:, list(range(2, len(df_a.columns)))]), df_a['LABEL'])
     print(grid_search)
     print(grid_search.best_params_)
@@ -138,7 +166,7 @@ def random_forest():
     # формирование тестовых выборок
     X_train, X_test, y_train, y_test = train_test_split(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'],
                                                         train_size=0.75, random_state=42)
-    scaler = StandardScaler()
+    scaler = RobustScaler()
     scaler.fit(X_train)
     X_train_scaler = scaler.transform(X_train)
     X_test_scaler = scaler.transform(X_test)
@@ -182,9 +210,10 @@ def random_forest():
     rnd_frst = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES)
     k_range = list([2, 5, 10, 20, 50, 100])
     param_grid = dict(n_estimators=k_range)
+    a_scaler = RobustScaler()
     grid = GridSearchCV(rnd_frst, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True,
                         n_jobs=N_JOBS)
-    grid_search = grid.fit(X_train_scaler, y_train)
+    grid_search = grid.fit(a_scaler.fit_transform(df_a.iloc[:, list(range(2, len(df_a.columns)))]), df_a['LABEL'])
     print(grid_search)
     print(grid_search.best_params_)
     accuracy = grid_search.best_score_ * 100
@@ -258,12 +287,12 @@ def decision_tree():
 
 def naive_bayes_bernoulli():
     # загрузка данных
-    df_a = load_data('train_v2.csv')
+    df_a = load_data('train_v1.csv')
 
     # формирование тестовых выборок
     X_train, X_test, y_train, y_test = train_test_split(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'],
                                                         train_size=0.75, random_state=42)
-    scaler = StandardScaler()
+    scaler = RobustScaler()
     scaler.fit(X_train)
     X_train_scaler = scaler.transform(X_train)
     X_test_scaler = scaler.transform(X_test)
@@ -300,26 +329,33 @@ def naive_bayes_bernoulli():
 
     print()
 
+    clf = BernoulliNB()
+    recall_specificity_scoring(df_a, scaler, clf)
+
     print("Поиск оптимальных значений")
     nb = BernoulliNB()
-    k_range = [2, 5, 10, 20, 50, 100]
-    param_grid = dict()
-    grid = GridSearchCV(nb, param_grid, cv=3, scoring='roc_auc', verbose=4, return_train_score=True, n_jobs=N_JOBS)
-    grid_search = grid.fit(X_train_scaler, y_train)
+    k_range = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, 1.2, 1.5, 2.0, 2.2, 2.5, 3.0]
+    kk_range = [0.0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, 1.2, 1.5, 2.0, 2.2, 2.5]
+    param_grid = dict(alpha=k_range, binarize=kk_range)
+
+    grid = GridSearchCV(nb, param_grid, cv=5, scoring='roc_auc', verbose=4, return_train_score=True, n_jobs=N_JOBS)
+    grid_search = grid.fit(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'])
     print(grid_search)
     print(grid_search.best_params_)
     accuracy = grid_search.best_score_ * 100
     print("Accuracy for our training dataset with tuning is : {:.2f}%".format(accuracy))
 
+    clf = BernoulliNB(alpha=grid_search.best_params_['alpha'], binarize=grid_search.best_params_['binarize'])
+    recall_specificity_scoring(df_a, scaler, clf)
 
-def naive_bayes_gaussian():
+def naive_bayes_multinomial():
     # загрузка данных
-    df_a = load_data('train_v3.csv')
+    df_a = load_data('train_v1.csv')
 
     # формирование тестовых выборок
     X_train, X_test, y_train, y_test = train_test_split(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'],
                                                         train_size=0.75, random_state=42)
-    scaler = StandardScaler()
+    scaler = RobustScaler()
     scaler.fit(X_train)
     X_train_scaler = scaler.transform(X_train)
     X_test_scaler = scaler.transform(X_test)
@@ -334,7 +370,7 @@ def naive_bayes_gaussian():
     print()
     # без скалирования
     print("Классификация без использования скалирования")
-    nb = GaussianNB()
+    nb = MultinomialNB()
     nb.fit(X_train, y_train)
     y_pred = nb.predict(X_test)
 
@@ -344,30 +380,32 @@ def naive_bayes_gaussian():
 
     print()
 
-    print("Классификация с использованием скалирования")
+    clf = MultinomialNB()
+    recall_specificity_scoring_no_scaler(df_a, clf)
 
-    nb = GaussianNB()
-    nb.fit(X_train_scaler, y_train)
-    y_pred = nb.predict(X_test_scaler)
+    print("Поиск оптимальных значений")
+    nb = MultinomialNB()
+    k_range = list(np.arange(0.005, 3.0, 0.005))
+    param_grid = dict(alpha=k_range)
+    grid = GridSearchCV(nb, param_grid, cv=5, scoring='roc_auc', verbose=4, return_train_score=True, n_jobs=N_JOBS)
+    grid_search = grid.fit(X_train, y_train)
+    print(grid_search)
+    print(grid_search.best_params_)
+    accuracy = grid_search.best_score_ * 100
+    print("Accuracy for our training dataset with tuning is : {:.2f}%".format(accuracy))
 
-    quality = confusion_matrix(y_test, y_pred)
-    print('полнота', quality[0, 0] / sum(quality[0, :]))
-    print('специфичность', quality[1, 1] / sum(quality[1, :]))
-
-    print()
+    clf = MultinomialNB(alpha=grid_search.best_params_['alpha'])
+    recall_specificity_scoring_no_scaler(df_a, clf)
 
 
 def nb_compare():
     # загрузка данных
-    df_a = load_data('train_v3.csv')
+    df_a = load_data('train_v1.csv')
 
     # формирование тестовых выборок
     X_train, X_test, y_train, y_test = train_test_split(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'],
                                                         train_size=0.75, random_state=42)
-    scaler = StandardScaler()
-    scaler.fit(X_train)
-    X_train_scaler = scaler.transform(X_train)
-    X_test_scaler = scaler.transform(X_test)
+
 
     print('количество объектов в тренировочной выборке:\n', y_train.value_counts(), "\n")
     print('количество объектов в тестовой выборке: \n', y_test.value_counts(), "\n")
@@ -379,11 +417,11 @@ def nb_compare():
     plt.figure(figsize=(10, 10)).clf()
     print()
     nbb = BernoulliNB()
-    nbg = GaussianNB()
+    nbm = MultinomialNB()
 
     print("Метод Бернулли")
-    nbb.fit(X_train_scaler, y_train)
-    y_pred = nbb.predict(X_test_scaler)
+    nbb.fit(X_train, y_train)
+    y_pred = nbb.predict(X_test)
 
     quality = confusion_matrix(y_test, y_pred)
     print('полнота', quality[0, 0] / sum(quality[0, :]))
@@ -392,17 +430,17 @@ def nb_compare():
     print()
 
     col = (np.random.random(), np.random.random(), np.random.random())
-    Roc_data = nbb.predict_proba(X_test_scaler)
+    Roc_data = nbb.predict_proba(X_test)
     fpr_roc, tpr_roc, threshold_roc = roc_curve(y_test, Roc_data[:, 1], pos_label='Physics')
-    plt.plot(fpr_roc, tpr_roc, label='BernoulliNB', color=col)
+    plt.plot(fpr_roc, tpr_roc, label='Наивный Байес Бернулли', color="green")
     plt.plot((0.0, 1.0), (0.0, 1.0))
     plt.xlabel('True Positive Rate')
     plt.ylabel('False Positive Rate')
     plt.legend()
 
     print("Метод Гаусса")
-    nbg.fit(X_train_scaler, y_train)
-    y_pred = nbg.predict(X_test_scaler)
+    nbm.fit(X_train, y_train)
+    y_pred = nbm.predict(X_test)
 
     quality = confusion_matrix(y_test, y_pred)
     print('полнота', quality[0, 0] / sum(quality[0, :]))
@@ -410,9 +448,9 @@ def nb_compare():
 
     print()
     col = (np.random.random(), np.random.random(), np.random.random())
-    Roc_data = nbg.predict_proba(X_test_scaler)
+    Roc_data = nbm.predict_proba(X_test)
     fpr_roc, tpr_roc, threshold_roc = roc_curve(y_test, Roc_data[:, 1], pos_label='Physics')
-    plt.plot(fpr_roc, tpr_roc, label='GaussianNB', color=col)
+    plt.plot(fpr_roc, tpr_roc, label='Полиномиальный Наивный Байкс', color="red")
     plt.plot((0.0, 1.0), (0.0, 1.0))
     plt.xlabel('True Positive Rate')
     plt.ylabel('False Positive Rate')
