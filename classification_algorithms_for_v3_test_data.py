@@ -15,8 +15,7 @@ from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.tree import DecisionTreeClassifier
 
 MAX_FEATURES = None
-N_JOBS = 6
-MIN_DF = 0.01
+N_JOBS = -1
 
 
 def recall_specificity_scoring(df_a, scaler, clf):
@@ -38,7 +37,7 @@ def recall_specificity_scoring(df_a, scaler, clf):
         print()
     recal = recal / len(cv_results['test_tp'])
     specificit = specificit / len(cv_results['test_tp'])
-    print("******\n", "Полнота: ", recal, '\n','Специфичность: ', specificit, '\n*****\n')
+    print("******\n", "Полнота: ", recal, '\n', 'Специфичность: ', specificit, '\n*****\n')
     print(cv_results)
 
 
@@ -61,7 +60,7 @@ def recall_specificity_scoring_no_scaler(df_a, clf):
         print()
     recal = recal / len(cv_results['test_tp'])
     specificit = specificit / len(cv_results['test_tp'])
-    print("******\n",'Полнота: ', recal, '\n', 'Срецифичность: ', specificit, '\n*****\n')
+    print("******\n", 'Полнота: ', recal, '\n', 'Срецифичность: ', specificit, '\n*****\n')
     print(cv_results)
 
 
@@ -287,16 +286,36 @@ def decision_tree():
 
     a_scaler = RobustScaler()
     clf = DecisionTreeClassifier(random_state=42, max_features=MAX_FEATURES)
-    recall_specificity_scoring(df_a,a_scaler,clf)
+    recall_specificity_scoring(df_a, a_scaler, clf)
 
-    col = (np.random.random(), np.random.random(), np.random.random())
-    Roc_data = dtree.predict_proba(X_test_scaler)
-    fpr_roc, tpr_roc, threshold_roc = roc_curve(y_test, Roc_data[:, 1], pos_label='Physics')
-    plt.plot(fpr_roc, tpr_roc, label='Набор униграмм', color=col)
-    plt.plot((0.0, 1.0), (0.0, 1.0))
-    plt.xlabel('True Positive Rate')
-    plt.ylabel('False Positive Rate')
-    plt.legend()
+    clf = DecisionTreeClassifier(random_state=42)
+
+    k_criterion = ['gini', 'entropy', 'log_loss']
+    k_max_depth = [1, 2, 5, 10, 12, 15, 20, 30, 50, 100, 150, 200, None]
+    k_min_samples_split = [2, 5, 10, 12, 15, 20, 30, 50, 100, 150, 200, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, 1.5, 2.0,
+                           3.0]
+    k_min_samples_leaf = [1, 2, 5, 10, 12, 15, 20, 30, 50, 100, 150, 200, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, 1.5,
+                          2.0, 3.0]
+    param_grid = dict(criterion=k_criterion, max_depth=k_max_depth, min_samples_split=k_min_samples_split
+                      , min_samples_leaf=k_min_samples_leaf)
+    time_start = timeit.default_timer
+    grid = GridSearchCV(clf, param_grid, cv=5, scoring='roc_auc', verbose=4, return_train_score=True, n_jobs=N_JOBS)
+    grid_search = grid.fit(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'])
+    print(grid_search)
+    print(grid_search.best_params_)
+    accuracy = grid_search.best_score_ * 100
+    print("Accuracy for our training dataset with tuning is : {:.2f}%".format(accuracy))
+    time_stop = timeit.default_timer
+    clf = DecisionTreeClassifier(criterion=grid_search.best_params_['criterion'],
+                                 max_depth=grid_search.best_params_['max_depth'],
+                                 min_samples_split=grid_search.best_params_['min_samples_split'],
+                                 min_samples_leaf=grid_search.best_params_['min_samples_leaf'])
+
+
+    recall_specificity_scoring(df_a, scaler, clf)
+    print("Время выполнения: ", time_stop-time_start,"\nВремя в минутах: ",(time_start-time_stop)/60)
+
+    # {'criterion': 'entropy', 'max_depth': 30, 'min_samples_leaf': 12, 'min_samples_split': 200}
 
 def naive_bayes_bernoulli():
     # загрузка данных
