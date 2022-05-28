@@ -292,20 +292,20 @@ def decision_tree():
 
     k_criterion = ['gini', 'entropy', 'log_loss']
     k_max_depth = [1, 2, 5, 10, 12, 15, 20, 30, 50, 100, 150, 200, None]
-    k_min_samples_split = [2, 5, 10, 12, 15, 20, 30, 50, 100, 150, 200, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, 1.5, 2.0,
-                           3.0]
+    k_min_samples_split = [2, 5, 10, 12, 15, 20, 30, 50, 100, 150, 200, 300, 500, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0]
     k_min_samples_leaf = [1, 2, 5, 10, 12, 15, 20, 30, 50, 100, 150, 200, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, 1.5,
                           2.0, 3.0]
     param_grid = dict(criterion=k_criterion, max_depth=k_max_depth, min_samples_split=k_min_samples_split
                       , min_samples_leaf=k_min_samples_leaf)
-    time_start = timeit.default_timer
-    grid = GridSearchCV(clf, param_grid, cv=5, scoring='roc_auc', verbose=4, return_train_score=True, n_jobs=N_JOBS)
+    time_start = timeit.default_timer()
+    grid = GridSearchCV(clf, param_grid, cv=5, scoring=['roc_pr', 'balanced_accuracy'],refit="AUC", verbose=4,
+                        return_train_score=True, n_jobs=N_JOBS)
     grid_search = grid.fit(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'])
     print(grid_search)
     print(grid_search.best_params_)
     accuracy = grid_search.best_score_ * 100
     print("Accuracy for our training dataset with tuning is : {:.2f}%".format(accuracy))
-    time_stop = timeit.default_timer
+    time_stop = timeit.default_timer()
     clf = DecisionTreeClassifier(criterion=grid_search.best_params_['criterion'],
                                  max_depth=grid_search.best_params_['max_depth'],
                                  min_samples_split=grid_search.best_params_['min_samples_split'],
@@ -313,7 +313,7 @@ def decision_tree():
 
 
     recall_specificity_scoring(df_a, scaler, clf)
-    print("Время выполнения: ", time_stop-time_start,"\nВремя в минутах: ",(time_start-time_stop)/60)
+    print("Время выполнения: ", time_stop-time_start,"\nВремя в минутах: ",(time_stop-time_start)/60)
 
     # {'criterion': 'entropy', 'max_depth': 30, 'min_samples_leaf': 12, 'min_samples_split': 200}
 
