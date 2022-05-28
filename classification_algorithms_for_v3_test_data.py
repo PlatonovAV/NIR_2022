@@ -502,12 +502,12 @@ def nb_compare():
 
 def bagging():
     # загрузка данных
-    df_a = load_data('train_v3.csv')
+    df_a = load_data('train_v1.csv')
 
     # формирование тестовых выборок
     X_train, X_test, y_train, y_test = train_test_split(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'],
                                                         train_size=0.75, random_state=42)
-    scaler = StandardScaler()
+    scaler = RobustScaler()
     scaler.fit(X_train)
     X_train_scaler = scaler.transform(X_train)
     X_test_scaler = scaler.transform(X_test)
@@ -519,12 +519,13 @@ def bagging():
     print(y_train.value_counts()[0] / (y_train.value_counts()[0] + y_train.value_counts()[1]) * 100, ' %')
     print(y_train.value_counts()[1] / (y_train.value_counts()[0] + y_train.value_counts()[1]) * 100, ' %')
 
+    base =KNeighborsClassifier(n_neighbors=150, algorithm='kd_tree',n_jobs=N_JOBS)
+    base_classifier= base
+
     print()
     # без скалирования
     print("Классификация без использования скалирования")
-    clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), n_estimators=10, random_state=42,
-                            max_features=MAX_FEATURES,
-                            n_jobs=N_JOBS)
+    clf = BaggingClassifier(base_estimator=base_classifier, n_estimators=10, random_state=42)
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
 
@@ -535,9 +536,8 @@ def bagging():
     print()
 
     print("Классификация с использованием скалирования")
-
-    clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), n_estimators=10, random_state=42,
-                            n_jobs=N_JOBS, max_features=MAX_FEATURES)
+    base_classifier = base
+    clf = BaggingClassifier(base_estimator=base_classifier, n_estimators=10, random_state=42)
     clf.fit(X_train_scaler, y_train)
     y_pred = clf.predict(X_test_scaler)
 
@@ -548,11 +548,13 @@ def bagging():
     print()
 
     print("Поиск оптимальных значений")
-    clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), random_state=42,
+    base_classifier=base
+    clf = BaggingClassifier(base_estimator=base_classifier, random_state=42,
                             max_features=MAX_FEATURES)
-    k_range = list([5, 10, 50, 100])
-    param_grid = dict(n_estimators=k_range)
-    grid = GridSearchCV(clf, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=N_JOBS)
+    k_range = [2, 5, 10, 20, 50, 100]
+    k_max_samples=[1, 2, 5, 10, 20, 50, 100,0.01,0.05,0.1,0.2,0.5,1.0]
+    param_grid = dict(n_estimators=k_range, max_samples=k_max_samples)
+    grid = GridSearchCV(clf, param_grid, scoring='roc_auc', verbose=3, return_train_score=True)
     grid_search = grid.fit(X_train_scaler, y_train)
     print(grid_search)
     print(grid_search.best_params_)
@@ -561,8 +563,8 @@ def bagging():
 
     plt.figure(figsize=(10, 10)).clf()
     for n in k_range:
-        clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), n_estimators=n, random_state=42,
-                                max_features=MAX_FEATURES)
+        base_classifier=base
+        clf = BaggingClassifier(base_estimator=base_classifier, n_estimators=n, random_state=42)
         clf.fit(X_train_scaler, y_train)
         y_pred = clf.predict(X_test_scaler)
 
