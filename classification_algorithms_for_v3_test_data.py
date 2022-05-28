@@ -7,7 +7,7 @@ from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier, AdaBoostClassifier, GradientBoostingClassifier
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.manifold import TSNE
-from sklearn.metrics import confusion_matrix, roc_curve
+from sklearn.metrics import confusion_matrix, roc_curve, roc_auc_score
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_validate
 from sklearn.naive_bayes import BernoulliNB, GaussianNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
@@ -274,7 +274,8 @@ def decision_tree():
 
     print("Классификация с использованием скалирования")
 
-    dtree = DecisionTreeClassifier(random_state=42, max_features=MAX_FEATURES)
+    cn = ['Computer Science', 'Physics']
+    dtree = DecisionTreeClassifier(random_state=42,max_depth=5, max_features=MAX_FEATURES)
     dtree.fit(X_train_scaler, y_train)
     y_pred = dtree.predict(X_test_scaler)
 
