@@ -182,7 +182,7 @@ def random_forest():
     # без скалирования
     s = timeit.default_timer()
     print("Классификация без использования скалирования")
-    forest = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES, n_estimators=10, n_jobs=N_JOBS)
+    forest = RandomForestClassifier(random_state=42, n_estimators=10, n_jobs=N_JOBS)
     forest.fit(X_train, y_train)
     y_pred = forest.predict(X_test)
 
@@ -195,7 +195,7 @@ def random_forest():
     print()
     s = timeit.default_timer()
     print("Классификация с использованием скалирования")
-    forest = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES, n_estimators=10, n_jobs=N_JOBS)
+    forest = RandomForestClassifier(random_state=42, n_estimators=10, n_jobs=N_JOBS)
     forest.fit(X_train_scaler, y_train)
     y_pred = forest.predict(X_test_scaler)
 
@@ -207,8 +207,8 @@ def random_forest():
     print()
 
     print("Поиск оптимальных значений")
-    rnd_frst = RandomForestClassifier(random_state=42, max_features=MAX_FEATURES)
-    k_range = list([2, 5, 10, 20, 50, 100])
+    rnd_frst = RandomForestClassifier(random_state=42)
+    k_range = [2, 5, 10, 20, 50, 100]
     param_grid = dict(n_estimators=k_range)
     a_scaler = RobustScaler()
     grid = GridSearchCV(rnd_frst, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True,
@@ -275,7 +275,7 @@ def decision_tree():
     print("Классификация с использованием скалирования")
 
     cn = ['Computer Science', 'Physics']
-    dtree = DecisionTreeClassifier(random_state=42,max_depth=5, max_features=MAX_FEATURES)
+    dtree = DecisionTreeClassifier(random_state=42, max_depth=5, max_features=MAX_FEATURES)
     dtree.fit(X_train_scaler, y_train)
     y_pred = dtree.predict(X_test_scaler)
 
@@ -320,7 +320,6 @@ def decision_tree():
 
     # Полнота:  0.9007862242240403
     # Специфичность:  0.8349609375
-
 
     # balanced {'criterion': 'entropy', 'max_depth': 100, 'min_samples_leaf': 5, 'min_samples_split': 50}
     # 87 %
@@ -519,13 +518,14 @@ def bagging():
     print(y_train.value_counts()[0] / (y_train.value_counts()[0] + y_train.value_counts()[1]) * 100, ' %')
     print(y_train.value_counts()[1] / (y_train.value_counts()[0] + y_train.value_counts()[1]) * 100, ' %')
 
-    base =KNeighborsClassifier(n_neighbors=150, algorithm='kd_tree',n_jobs=N_JOBS)
-    base_classifier= base
+    base = KNeighborsClassifier()
+    base_classifier = base
 
     print()
+    start_time = timeit.default_timer()
     # без скалирования
     print("Классификация без использования скалирования")
-    clf = BaggingClassifier(base_estimator=base_classifier, n_estimators=10, random_state=42)
+    clf = BaggingClassifier(base_estimator=base_classifier, n_estimators=10, random_state=42, n_jobs=N_JOBS)
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
 
@@ -537,50 +537,97 @@ def bagging():
 
     print("Классификация с использованием скалирования")
     base_classifier = base
-    clf = BaggingClassifier(base_estimator=base_classifier, n_estimators=10, random_state=42)
+    clf = BaggingClassifier(base_estimator=base_classifier, n_estimators=10, random_state=42, n_jobs=N_JOBS)
     clf.fit(X_train_scaler, y_train)
     y_pred = clf.predict(X_test_scaler)
 
     quality = confusion_matrix(y_test, y_pred)
     print('полнота', quality[0, 0] / sum(quality[0, :]))
     print('специфичность', quality[1, 1] / sum(quality[1, :]))
-
+    end_time = timeit.default_timer()
+    print('время выполнения: ', end_time - start_time)
     print()
 
     print("Поиск оптимальных значений")
-    base_classifier=base
-    clf = BaggingClassifier(base_estimator=base_classifier, random_state=42,
-                            max_features=MAX_FEATURES)
-    k_range = [2, 5, 10, 20, 50, 100]
-    k_max_samples=[1, 2, 5, 10, 20, 50, 100,0.01,0.05,0.1,0.2,0.5,1.0]
+    base_classifier = base
+    clf = BaggingClassifier(base_estimator=base_classifier, random_state=42, n_jobs=N_JOBS)
+    k_range = [2, 5, 10, 20, 50]
+    k_max_samples = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0]
     param_grid = dict(n_estimators=k_range, max_samples=k_max_samples)
-    grid = GridSearchCV(clf, param_grid, scoring='roc_auc', verbose=3, return_train_score=True)
+    grid = GridSearchCV(clf, param_grid, scoring='balanced_accuracy', verbose=3, return_train_score=True, n_jobs=2)
     grid_search = grid.fit(X_train_scaler, y_train)
     print(grid_search)
     print(grid_search.best_params_)
     accuracy = grid_search.best_score_ * 100
     print("Accuracy for our training dataset with tuning is : {:.2f}%".format(accuracy))
 
+    a_scaler = RobustScaler()
+    clf = BaggingClassifier(base_estimator=base_classifier, random_state=42,
+                            n_estimators=grid_search.best_params_['n_estimators'],
+                            max_samples=grid_search.best_params_['max_samples']
+                            , n_jobs=N_JOBS)
+    recall_specificity_scoring(df_a, a_scaler, clf)
+
+    # метод случайных соседей, max_samples должно быть больше чем n_neighbors
+    # Оптимальные параметры:
+    # max_samples: 1.0 (0.2)
+    # n_estimators: 10 (50)
+    # 87 % (95)
+    # Оценка:
+    # Полнота:0.87 (0.65)
+    # Специфичность:0.88 (0.95)
+    # *********************
+    # метод случайного леса без параметров()
+    # Оптимальные параметры:
+    # 'max_samples': 1.0, 'n_estimators': 20 ()
+    # Оценка 88 % (94)
+    # Полнота:0.89 (0.89)
+    # Специфичность:0.89 (0.87)
+    # метод случайного леса c параметрами определёнными в первый раз
+    # Оптимальные параметры:
+    # {'max_samples': 1.0, 'n_estimators': 10} ({'max_samples': 1.0, 'n_estimators': 10})
+    # Оценка 80 (88)
+    # Полнота: 0.81 (0.82)
+    # Специфичность: 0.81 (0.80)
+    # *********************
+    # Полиномиальный Байес
+    # Оптимальные параметры: {'max_samples': 0.02, 'n_estimators': 50} ({'max_samples': 0.02, 'n_estimators': 50})
+    # Оценка ()
+    # Полнота:0.92 (0.92)
+    # Специфичность:0.88 (0.88)
+    # *********************
+    # Байес Бернулли
+    # Оптимальные параметры:
+    # {'max_samples': 1.0, 'n_estimators': 10} ({'max_samples': 0.5, 'n_estimators': 20})
+    # Оценка: 97
+    # Полнота: 0.91 0.91
+    # Специфичность: 0.91 0.91
+    # *********************
+
+    k_range = [1, 2, 5, 10, 20, 50]
+
+    base = KNeighborsClassifier(algorithm='kd_tree',n_neighbors=150)
     plt.figure(figsize=(10, 10)).clf()
+    base_classifier = base
     for n in k_range:
-        base_classifier=base
-        clf = BaggingClassifier(base_estimator=base_classifier, n_estimators=n, random_state=42)
+        clf = BaggingClassifier(base_estimator=base_classifier, n_estimators=10, max_samples=1.0, random_state=42, n_jobs=N_JOBS)
         clf.fit(X_train_scaler, y_train)
         y_pred = clf.predict(X_test_scaler)
 
         quality = confusion_matrix(y_test, y_pred)
         print('полнота', quality[0, 0] / sum(quality[0, :]))
         print('специфичность', quality[1, 1] / sum(quality[1, :]))
-        print('\n')
 
         col = (np.random.random(), np.random.random(), np.random.random())
         Roc_data = clf.predict_proba(X_test_scaler)
         fpr_roc, tpr_roc, threshold_roc = roc_curve(y_test, Roc_data[:, 1], pos_label='Physics')
-        plt.plot(fpr_roc, tpr_roc, label='n= %s ' % n, color=col)
+        plt.plot(fpr_roc, tpr_roc, label='Второй вариант оптимальных значений', color=col)
         plt.plot((0.0, 1.0), (0.0, 1.0))
         plt.xlabel('True Positive Rate')
         plt.ylabel('False Positive Rate')
         plt.legend()
+        print("n = ", n)
+        print('\n')
 
 
 def ada_boost():
