@@ -606,11 +606,12 @@ def bagging():
 
     k_range = [1, 2, 5, 10, 20, 50]
 
-    base = KNeighborsClassifier(algorithm='kd_tree',n_neighbors=150)
+    base = KNeighborsClassifier(algorithm='kd_tree', n_neighbors=150)
     plt.figure(figsize=(10, 10)).clf()
     base_classifier = base
     for n in k_range:
-        clf = BaggingClassifier(base_estimator=base_classifier, n_estimators=10, max_samples=1.0, random_state=42, n_jobs=N_JOBS)
+        clf = BaggingClassifier(base_estimator=base_classifier, n_estimators=10, max_samples=1.0, random_state=42,
+                                n_jobs=N_JOBS)
         clf.fit(X_train_scaler, y_train)
         y_pred = clf.predict(X_test_scaler)
 
@@ -632,15 +633,17 @@ def bagging():
 
 def ada_boost():
     # загрузка данных
-    df_a = load_data('train_v3.csv')
+    df_a = load_data('train_v1.csv')
 
     # формирование тестовых выборок
     X_train, X_test, y_train, y_test = train_test_split(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'],
                                                         train_size=0.75, random_state=42)
-    scaler = StandardScaler()
+    scaler = RobustScaler()
     scaler.fit(X_train)
     X_train_scaler = scaler.transform(X_train)
     X_test_scaler = scaler.transform(X_test)
+
+    base_classifier = BernoulliNB()
 
     print('количество объектов в тренировочной выборке:\n', y_train.value_counts(), "\n")
     print('количество объектов в тестовой выборке: \n', y_test.value_counts(), "\n")
@@ -652,7 +655,7 @@ def ada_boost():
     print()
     # без скалирования
     print("Классификация без использования скалирования")
-    clf = AdaBoostClassifier(n_estimators=10, random_state=42)
+    clf = AdaBoostClassifier(base_estimator=base_classifier, n_estimators=10, random_state=42)
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
 
@@ -664,7 +667,7 @@ def ada_boost():
 
     print("Классификация с использованием скалирования")
 
-    clf = AdaBoostClassifier(n_estimators=10, random_state=42)
+    clf = AdaBoostClassifier(base_estimator=base_classifier, n_estimators=10, random_state=42)
     clf.fit(X_train_scaler, y_train)
     y_pred = clf.predict(X_test_scaler)
 
@@ -674,22 +677,73 @@ def ada_boost():
 
     print()
 
+    clf = AdaBoostClassifier( n_estimators=10, random_state=42)
+
+    recall_specificity_scoring_no_scaler(df_a, clf)
+
+    print()
+
     print("Поиск оптимальных значений")
-    clf = AdaBoostClassifier(random_state=42)
-    k_range = list([5, 10, 50, 100])
-    param_grid = dict(n_estimators=k_range)
-    grid = GridSearchCV(clf, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=5)
-    grid_search = grid.fit(X_train_scaler, y_train)
+    clf = AdaBoostClassifier(base_estimator=base_classifier,random_state=42)
+    k_range = [1,2,5, 10, 20, 30, 40, 50, 75, 100]
+    k_learning_rate = [0.0, 0.01,0.02,0.03,0.04, 0.05, 0.1, 0.2, 0.3,0.4 ,0.5, 0.75, 1.0, 1.2, 1.5, 2.0]
+    k_algorithm = ['SAMME', 'SAMME.R']
+    param_grid = dict(n_estimators=k_range, learning_rate=k_learning_rate, algorithm=k_algorithm)
+    grid = GridSearchCV(clf, param_grid, scoring='balanced_accuracy', verbose=3, return_train_score=True, n_jobs=-1)
+    grid_search = grid.fit(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'])
     print(grid_search)
     print(grid_search.best_params_)
     accuracy = grid_search.best_score_ * 100
     print("Accuracy for our training dataset with tuning is : {:.2f}%".format(accuracy))
 
+    clf = AdaBoostClassifier(base_estimator=base_classifier, random_state=42, n_estimators=grid_search.best_params_['n_estimators'],
+                             learning_rate=grid_search.best_params_['learning_rate'],
+                             algorithm=grid_search.best_params_['algorithm'])
+
+
+    recall_specificity_scoring_no_scaler(df_a,clf)
+
+    # Результаты работы алогритмов
+    # (в скобках указаны значения полученные при оценке 'roc_auc')
+    # Деревья решений при максимальной глубине равной 1
+    # Параметры
+    # {'algorithm': 'SAMME.R', 'learning_rate': 0.5, 'n_estimators': 200} ({'algorithm': 'SAMME.R', 'learning_rate': 0.5, 'n_estimators': 200})
+    # Оценка
+    # Проценты: (97,5) 0,92
+    # Полнота: (0.93) 0,93
+    # Специфичность: (0.91) 0,91
+    # ***************
+    # Деревья решений с определенными ранее параметрами
+    # Параметры
+    #  {'algorithm': 'SAMME.R', 'learning_rate': 0.5, 'n_estimators': 40} ({'algorithm': 'SAMME.R', 'learning_rate': 0.1, 'n_estimators': 200})
+    # Оценка
+    # Проценты: (97)
+    # Полнота: 0.92 (0.93)
+    # Специфичность: 0.91 (0.92)
+    # ***************
+    # Полиномиальный Наивный Байес
+    # Параметры
+    # {'algorithm': 'SAMME.R', 'learning_rate': 0.2, 'n_estimators': 100} ({'algorithm': 'SAMME.R', 'learning_rate': 0.4, 'n_estimators': 50})
+    # Оценка для roc_auc аналогично
+    # Проценты: 92
+    # Полнота: 0.91 (0,94)
+    # Специфичность: 0.93 (0,83)
+    # ***************
+    # Наивный Байес Бернулли
+    # Параметры
+    #{'algorithm': 'SAMME', 'learning_rate': 0.05, 'n_estimators': 100} ({'algorithm': 'SAMME', 'learning_rate': 0.05, 'n_estimators': 100})
+    # Оценка
+    # Проценты:
+    # Полнота: 0,94 (94)
+    # Специфичность:0,88 (88)
+
     plt.figure(figsize=(10, 10)).clf()
     for n in k_range:
-        clf = AdaBoostClassifier(n_estimators=n, random_state=42)
-        clf.fit(X_train_scaler, y_train)
-        y_pred = clf.predict(X_test_scaler)
+        clf = AdaBoostClassifier(base_estimator=base_classifier,n_estimators=n, random_state=42,
+                                 algorithm= grid_search.best_params_['algorithm'],
+                                 learning_rate= grid_search.best_params_['learning_rate'] )
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
 
         quality = confusion_matrix(y_test, y_pred)
         print('полнота', quality[0, 0] / sum(quality[0, :]))
@@ -697,7 +751,7 @@ def ada_boost():
         print('\n')
 
         col = (np.random.random(), np.random.random(), np.random.random())
-        Roc_data = clf.predict_proba(X_test_scaler)
+        Roc_data = clf.predict_proba(X_test)
         fpr_roc, tpr_roc, threshold_roc = roc_curve(y_test, Roc_data[:, 1], pos_label='Physics')
         plt.plot(fpr_roc, tpr_roc, label='n= %s ' % n, color=col)
         plt.plot((0.0, 1.0), (0.0, 1.0))
