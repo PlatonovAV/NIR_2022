@@ -13,6 +13,7 @@ from sklearn.naive_bayes import BernoulliNB, GaussianNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.tree import DecisionTreeClassifier
+import time
 
 MAX_FEATURES = None
 N_JOBS = -1
@@ -89,6 +90,8 @@ def k_neighbors(txt):
 
     scaler = RobustScaler()
     scaler.fit(X_train)
+    X_train_scaler = scaler.transform(X_train)
+    X_test_scaler = scaler.transform(X_test)
 
     s = timeit.default_timer()
     print("Классификация без использования скалирования")
@@ -158,6 +161,16 @@ def k_neighbors(txt):
         plt.ylabel('False Positive Rate')
         plt.legend()
 
+
+    # вычисление времени выполнения
+    clf = KNeighborsClassifier(algorithm='kd_tree',n_neighbors=150)
+    clf.fit(X_train,y_train)
+    X_test_scaler_2 = X_test.head(2500)
+    start_time = timeit.default_timer()
+    for n in range(5):
+        y_pred = clf.predict(X_test_scaler_2)
+    end_time = timeit.default_timer()
+    print('время выполнения:', end_time-start_time)
 
 def random_forest():
     # загрузка данных
@@ -247,7 +260,7 @@ def decision_tree():
     # формирование тестовых выборок
     X_train, X_test, y_train, y_test = train_test_split(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'],
                                                         train_size=0.75, random_state=42)
-    scaler = StandardScaler()
+    scaler = RobustScaler()
     scaler.fit(X_train)
     X_train_scaler = scaler.transform(X_train)
     X_test_scaler = scaler.transform(X_test)
@@ -326,6 +339,17 @@ def decision_tree():
     # Полнота:  0.8755312477658282
     #  Специфичность:  0.8681640625
 
+    # вычисление времени выполнения
+    clf = DecisionTreeClassifier(max_depth=30,min_samples_split=12,min_samples_leaf=200)
+    clf.fit(X_train,y_train)
+    X_test_scaler_2 = X_test.head(2500)
+    X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
+    start_time = timeit.default_timer()
+    for n in range(50):
+        y_pred = clf.predict(X_test_scaler_2)
+    end_time = timeit.default_timer()
+    print('время выполнения:', end_time-start_time)
 
 def naive_bayes_bernoulli():
     # загрузка данных
@@ -390,6 +414,14 @@ def naive_bayes_bernoulli():
     clf = BernoulliNB(alpha=grid_search.best_params_['alpha'], binarize=grid_search.best_params_['binarize'])
     recall_specificity_scoring(df_a, scaler, clf)
 
+    clf = BernoulliNB()
+    clf.fit(X_train,y_train)
+    X_test_scaler_2 = X_test.head(2500)
+    start_time = timeit.default_timer()
+    for n in range(5):
+        y_pred = clf.predict(X_test_scaler_2)
+    end_time = timeit.default_timer()
+    print('время выполнения:', end_time-start_time)
 
 def naive_bayes_multinomial():
     # загрузка данных
@@ -440,6 +472,16 @@ def naive_bayes_multinomial():
     clf = MultinomialNB(alpha=grid_search.best_params_['alpha'])
     recall_specificity_scoring_no_scaler(df_a, clf)
 
+    clf = MultinomialNB()
+    X_train_scaler = scaler.fit_transform(X_train)
+    X_test_scaler = scaler.fit_transform(X_test)
+    clf.fit(X_train, y_train)
+    X_test_scaler_2 = X_test.head(2500)
+    start_time = timeit.default_timer()
+    for n in range(5):
+        y_pred = clf.predict(X_test_scaler_2)
+    end_time = timeit.default_timer()
+    print('время выполнения:', end_time - start_time)
 
 def nb_compare():
     # загрузка данных
@@ -630,6 +672,56 @@ def bagging():
         print("n = ", n)
         print('\n')
 
+    # ********************************************
+    # Время бэггинга для K-ближайших соседй
+    base_clf = KNeighborsClassifier(algorithm='kd_tree',n_neighbors=150)
+    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=50,max_samples=0.2,n_jobs=4)
+    clf.fit(X_train,y_train)
+    X_test_scaler_2 = X_test.head(2500)
+    start_time = timeit.default_timer()
+    for n in range(5):
+        y_pred = clf.predict(X_test_scaler_2)
+    end_time = timeit.default_timer()
+    print('Время выполнения',end_time-start_time)
+
+    # ********************************************
+    # Время бэггинга для Наивног Байеса Бернулли
+    X_train_scaler = scaler.fit_transform(X_train)
+    X_test_scaler =scaler.fit_transform(X_test)
+    base_clf = BernoulliNB()
+    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=20,max_samples=0.5,n_jobs=4)
+    clf.fit(X_train,y_train)
+    X_test_scaler_2 = X_test.head(2500)
+    start_time = timeit.default_timer()
+    for n in range(5):
+        y_pred = clf.predict(X_test_scaler_2)
+    end_time = timeit.default_timer()
+    print('Время выполнения',end_time-start_time)
+
+    # ********************************************
+    # Время бэггинга для полиномиального Наивного Байеса
+    base_clf = MultinomialNB()
+    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=50,max_samples=0.02,n_jobs=4)
+    clf.fit(X_train,y_train)
+    X_test_scaler_2 = X_test.head(2500)
+    start_time = timeit.default_timer()
+    for n in range(5):
+        y_pred = clf.predict(X_test_scaler_2)
+    end_time = timeit.default_timer()
+    print('Время выполнения',end_time-start_time)
+
+    # ********************************************
+    # Время бэггинга для дерева решений
+    base_clf = DecisionTreeClassifier(max_depth=30,min_samples_split=12,min_samples_leaf=200)
+    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=50,max_samples=1.0,n_jobs=4)
+    clf.fit(X_train,y_train)
+    X_test_scaler_2 = X_test.head(2500)
+    start_time = timeit.default_timer()
+    for n in range(20):
+        y_pred = clf.predict(X_test_scaler_2)
+    end_time = timeit.default_timer()
+    print('Время выполнения',end_time-start_time)
+
 
 def ada_boost():
     # загрузка данных
@@ -762,6 +854,48 @@ def ada_boost():
         plt.show()
 
 
+    # ********************************************
+    # Время бустинга для Наивног Байеса Бернулли
+    X_train_scaler = scaler.fit_transform(X_train)
+    X_test_scaler = scaler.fit_transform(X_test)
+    base_clf = BernoulliNB()
+    clf = AdaBoostClassifier(base_estimator=base_clf, algorithm='SAMME',learning_rate=0.05,n_estimators=50)
+    clf.fit(X_train, y_train)
+    X_test_scaler_2 = X_test.head(2500)
+    start_time = timeit.default_timer()
+    for n in range(5):
+        y_pred = clf.predict(X_test_scaler_2)
+    end_time = timeit.default_timer()
+    print('Время выполнения', end_time - start_time)
+
+    # ********************************************
+    # Время бустинга для полиномиального Наивного Байеса
+    X_train_scaler = scaler.fit_transform(X_train)
+    X_test_scaler = scaler.fit_transform(X_test)
+    base_clf = MultinomialNB()
+    clf = AdaBoostClassifier(base_estimator=base_clf, n_estimators=50, algorithm='SAMME',learning_rate=0.05)
+    clf.fit(X_train, y_train)
+    X_test_scaler_2 = X_test.head(2500)
+    start_time = timeit.default_timer()
+    for n in range(5):
+        y_pred = clf.predict(X_test_scaler_2)
+    end_time = timeit.default_timer()
+    print('Время выполнения', end_time - start_time)
+
+    # ********************************************
+    # Время бустинга для дерева решений
+    X_train_scaler = scaler.fit_transform(X_train)
+    X_test_scaler = scaler.fit_transform(X_test)
+    base_clf = DecisionTreeClassifier(max_depth=30, min_samples_split=12, min_samples_leaf=200)
+    clf = AdaBoostClassifier(base_estimator=base_clf, n_estimators=40, algorithm='SAMME.R',learning_rate=0.5)
+    clf.fit(X_train, y_train)
+    X_test_scaler_2 = X_test.head(2500)
+    start_time = timeit.default_timer()
+    for n in range(5):
+        y_pred = clf.predict(X_test_scaler_2)
+    end_time = timeit.default_timer()
+    print('Время выполнения', end_time - start_time)
+
 def gradient_boost():
     # загрузка данных
     df_a = load_data('train_v1.csv')
@@ -864,3 +998,21 @@ def gradient_boost():
                 plt.ylabel('False Positive Rate')
                 plt.legend()
                 plt.show()
+
+    X_train_scaler = scaler.fit_transform(X_train)
+    X_test_scaler = scaler.fit_transform(X_test)
+    clf = GradientBoostingClassifier(random_state=42,
+                                     n_estimators=50,
+                                     learning_rate=0.1,
+                                     max_depth=16,
+                                     loss='exponential',
+                                     criterion='friedman_mse',
+                                     subsample=0.5)
+    clf.fit(X_train, y_train)
+    X_test_scaler_2 = X_test.head(2500)
+
+    start_time=timeit.default_timer()
+    for i in range(5):
+        y_pred=clf.predict(X_test_scaler_2)
+    end_time = timeit.default_timer()
+    print("время выполнения",end_time-start_time)
