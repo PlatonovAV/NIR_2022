@@ -811,11 +811,11 @@ def gradient_boost():
     print("Поиск оптимальных значений")
     clf = GradientBoostingClassifier(random_state=42)
     k_range = [2, 5, 10, 25, 50, 75, 100]
-    k_learning_rate = [0.01,0.05, 0.1, 0.5, 1.0,1.5,2.0]
-    k_max_depth = [2, 4, 8, 10, 20]
+    k_learning_rate = [0.01,0.05, 0.1, 0.5, 1.0,2.0]
+    k_max_depth = [2, 4, 8, 16]
     k_loss = ['log_loss','exponential']
-    k_criterion = ['friedman_mse','squared_error','mse']
-    k_subsample= [0.1,0.2,0.5,0.75,1.0]
+    k_criterion = ['friedman_mse','squared_error']
+    k_subsample= [0.25,0.5,0.75,1.0]
 
     param_grid = dict(n_estimators=k_range, learning_rate=k_learning_rate, max_depth=k_max_depth,loss=k_loss,criterion=k_criterion,subsample=k_subsample)
     grid = GridSearchCV(clf, param_grid, scoring='roc_auc',cv=4, verbose=3, return_train_score=True, n_jobs=-1)
@@ -827,13 +827,18 @@ def gradient_boost():
 
     a_scaler = RobustScaler()
     clf = GradientBoostingClassifier(random_state=42,
-                                     n_estimators=grid_search.best_params_['k_range'],
-                                     learning_rate=grid_search.best_params_['k_learning_rate'],
-                                     max_depth=grid_search.best_params_['k_max_depth'],
-                                     loss=grid_search.best_params_['k_loss'],
-                                     criterion=grid_search.best_params_['k_criterion'],
-                                     subsample=grid_search.best_params_['k_subsample'])
+                                     n_estimators=grid_search.best_params_['n_estimators'],
+                                     learning_rate=grid_search.best_params_['learning_rate'],
+                                     max_depth=grid_search.best_params_['max_depth'],
+                                     loss=grid_search.best_params_['loss'],
+                                     criterion=grid_search.best_params_['criterion'],
+                                     subsample=grid_search.best_params_['subsample'])
     recall_specificity_scoring(df_a,a_scaler,clf)
+    # {'criterion': 'friedman_mse', 'learning_rate': 0.1, 'loss': 'exponential', 'max_depth': 16, 'n_estimators': 100, 'subsample': 0.5}
+    # ******
+    #  Полнота:  0.9347384869932899
+    #  Специфичность:  0.914453125
+    # *****
 
     plt.figure(figsize=(10, 10)).clf()
     for n in [5, 10, 50, 100]:
@@ -842,10 +847,10 @@ def gradient_boost():
                 clf = GradientBoostingClassifier(n_estimators=n, random_state=42, learning_rate=m, max_depth=k,
                                                  max_features=MAX_FEATURES)
 
+                clf = DecisionTreeClassifier(max_depth=30,min_samples_leaf=200,min_samples_split=12)
                 clf.fit(X_train_scaler, y_train)
                 y_pred = clf.predict(X_test_scaler)
                 quality = confusion_matrix(y_test, y_pred)
-                print('параметры:\nn_estimators=', n, '\nlearning_rate=', m, '\nmax_depth=', k)
                 print('полнота', quality[0, 0] / sum(quality[0, :]))
                 print('специфичность', quality[1, 1] / sum(quality[1, :]))
                 print('\n')
@@ -853,8 +858,9 @@ def gradient_boost():
                 col = (np.random.random(), np.random.random(), np.random.random())
                 Roc_data = clf.predict_proba(X_test_scaler)
                 fpr_roc, tpr_roc, threshold_roc = roc_curve(y_test, Roc_data[:, 1], pos_label='Physics')
-                plt.plot(fpr_roc, tpr_roc, label='n= {},m= {}, k={}'.format(n, m, k), color=col)
+                plt.plot(fpr_roc, tpr_roc, label='Дерево решений', color='blue')
                 plt.plot((0.0, 1.0), (0.0, 1.0))
                 plt.xlabel('True Positive Rate')
                 plt.ylabel('False Positive Rate')
                 plt.legend()
+                plt.show()
