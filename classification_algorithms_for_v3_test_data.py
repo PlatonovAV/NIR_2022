@@ -643,7 +643,7 @@ def ada_boost():
     X_train_scaler = scaler.transform(X_train)
     X_test_scaler = scaler.transform(X_test)
 
-    base_classifier = BernoulliNB()
+    base_classifier = MultinomialNB()
 
     print('количество объектов в тренировочной выборке:\n', y_train.value_counts(), "\n")
     print('количество объектов в тестовой выборке: \n', y_test.value_counts(), "\n")
@@ -685,8 +685,8 @@ def ada_boost():
 
     print("Поиск оптимальных значений")
     clf = AdaBoostClassifier(base_estimator=base_classifier,random_state=42)
-    k_range = [1,2,5, 10, 20, 30, 40, 50, 75, 100]
-    k_learning_rate = [0.0, 0.01,0.02,0.03,0.04, 0.05, 0.1, 0.2, 0.3,0.4 ,0.5, 0.75, 1.0, 1.2, 1.5, 2.0]
+    k_range = [1,2,3,4,5, 10, 20, 30, 40, 50, 75, 100]
+    k_learning_rate = [0.01,0.02,0.03,0.04, 0.05, 0.1, 0.2, 0.3,0.4 ,0.5, 0.75, 1.0, 1.2, 1.5, 2.0]
     k_algorithm = ['SAMME', 'SAMME.R']
     param_grid = dict(n_estimators=k_range, learning_rate=k_learning_rate, algorithm=k_algorithm)
     grid = GridSearchCV(clf, param_grid, scoring='balanced_accuracy', verbose=3, return_train_score=True, n_jobs=-1)
@@ -740,8 +740,9 @@ def ada_boost():
     plt.figure(figsize=(10, 10)).clf()
     for n in k_range:
         clf = AdaBoostClassifier(base_estimator=base_classifier,n_estimators=n, random_state=42,
-                                 algorithm= grid_search.best_params_['algorithm'],
-                                 learning_rate= grid_search.best_params_['learning_rate'] )
+                                 algorithm= 'SAMME.R',
+                                 learning_rate=0.2)
+        clf = base_classifier
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
 
@@ -753,16 +754,17 @@ def ada_boost():
         col = (np.random.random(), np.random.random(), np.random.random())
         Roc_data = clf.predict_proba(X_test)
         fpr_roc, tpr_roc, threshold_roc = roc_curve(y_test, Roc_data[:, 1], pos_label='Physics')
-        plt.plot(fpr_roc, tpr_roc, label='n= %s ' % n, color=col)
+        plt.plot(fpr_roc, tpr_roc, label='полиномиальный Байес Бернулли', color='green')
         plt.plot((0.0, 1.0), (0.0, 1.0))
         plt.xlabel('True Positive Rate')
         plt.ylabel('False Positive Rate')
         plt.legend()
+        plt.show()
 
 
 def gradient_boost():
     # загрузка данных
-    df_a = load_data('train_v3.csv')
+    df_a = load_data('train_v1.csv')
 
     # формирование тестовых выборок
     X_train, X_test, y_train, y_test = train_test_split(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL'],
@@ -807,17 +809,31 @@ def gradient_boost():
     print()
 
     print("Поиск оптимальных значений")
-    clf = GradientBoostingClassifier(random_state=42, max_features=MAX_FEATURES)
-    k_range = list([2, 5, 10, 50, 100])
-    kk_range = list([0.1, 0, 2, 0.5, 1.0])
-    kkk_range = list([2, 4, 6, 8, 10, 20])
-    param_grid = dict(n_estimators=k_range, learning_rate=kk_range, max_depth=kkk_range)
-    grid = GridSearchCV(clf, param_grid, cv=3, scoring='roc_auc', verbose=3, return_train_score=True, n_jobs=N_JOBS)
-    grid_search = grid.fit(X_train_scaler, y_train)
+    clf = GradientBoostingClassifier(random_state=42)
+    k_range = [2, 5, 10, 25, 50, 75, 100]
+    k_learning_rate = [0.01,0.05, 0.1, 0.5, 1.0,1.5,2.0]
+    k_max_depth = [2, 4, 8, 10, 20]
+    k_loss = ['log_loss','exponential']
+    k_criterion = ['friedman_mse','squared_error','mse']
+    k_subsample= [0.1,0.2,0.5,0.75,1.0]
+
+    param_grid = dict(n_estimators=k_range, learning_rate=k_learning_rate, max_depth=k_max_depth,loss=k_loss,criterion=k_criterion,subsample=k_subsample)
+    grid = GridSearchCV(clf, param_grid, scoring='roc_auc',cv=4, verbose=3, return_train_score=True, n_jobs=-1)
+    grid_search = grid.fit(scaler.fit_transform(df_a.iloc[:, list(range(2, len(df_a.columns)))]), df_a['LABEL'])
     print(grid_search)
     print(grid_search.best_params_)
     accuracy = grid_search.best_score_ * 100
     print("Accuracy for our training dataset with tuning is : {:.2f}%".format(accuracy))
+
+    a_scaler = RobustScaler()
+    clf = GradientBoostingClassifier(random_state=42,
+                                     n_estimators=grid_search.best_params_['k_range'],
+                                     learning_rate=grid_search.best_params_['k_learning_rate'],
+                                     max_depth=grid_search.best_params_['k_max_depth'],
+                                     loss=grid_search.best_params_['k_loss'],
+                                     criterion=grid_search.best_params_['k_criterion'],
+                                     subsample=grid_search.best_params_['k_subsample'])
+    recall_specificity_scoring(df_a,a_scaler,clf)
 
     plt.figure(figsize=(10, 10)).clf()
     for n in [5, 10, 50, 100]:
@@ -825,6 +841,7 @@ def gradient_boost():
             for k in [2, 4, 6]:
                 clf = GradientBoostingClassifier(n_estimators=n, random_state=42, learning_rate=m, max_depth=k,
                                                  max_features=MAX_FEATURES)
+
                 clf.fit(X_train_scaler, y_train)
                 y_pred = clf.predict(X_test_scaler)
                 quality = confusion_matrix(y_test, y_pred)
