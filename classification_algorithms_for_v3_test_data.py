@@ -167,7 +167,7 @@ def k_neighbors(txt):
     clf.fit(X_train,y_train)
     X_test_scaler_2 = X_test.head(2500)
     start_time = timeit.default_timer()
-    for n in range(5):
+    for n in range(10):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('время выполнения:', end_time-start_time)
@@ -346,7 +346,7 @@ def decision_tree():
     X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(50):
+    for n in range(10):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('время выполнения:', end_time-start_time)
@@ -417,8 +417,10 @@ def naive_bayes_bernoulli():
     clf = BernoulliNB()
     clf.fit(X_train,y_train)
     X_test_scaler_2 = X_test.head(2500)
+    X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(5):
+    for n in range(10):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('время выполнения:', end_time-start_time)
@@ -477,8 +479,10 @@ def naive_bayes_multinomial():
     X_test_scaler = scaler.fit_transform(X_test)
     clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
+    X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(5):
+    for n in range(10):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('время выполнения:', end_time - start_time)
@@ -679,7 +683,7 @@ def bagging():
     clf.fit(X_train,y_train)
     X_test_scaler_2 = X_test.head(2500)
     start_time = timeit.default_timer()
-    for n in range(5):
+    for n in range(10):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('Время выполнения',end_time-start_time)
@@ -692,8 +696,10 @@ def bagging():
     clf = BaggingClassifier(base_estimator=base_clf,n_estimators=20,max_samples=0.5,n_jobs=4)
     clf.fit(X_train,y_train)
     X_test_scaler_2 = X_test.head(2500)
+    X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(5):
+    for n in range(10):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('Время выполнения',end_time-start_time)
@@ -704,8 +710,10 @@ def bagging():
     clf = BaggingClassifier(base_estimator=base_clf,n_estimators=50,max_samples=0.02,n_jobs=4)
     clf.fit(X_train,y_train)
     X_test_scaler_2 = X_test.head(2500)
+    X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(5):
+    for n in range(10):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('Время выполнения',end_time-start_time)
@@ -716,8 +724,10 @@ def bagging():
     clf = BaggingClassifier(base_estimator=base_clf,n_estimators=50,max_samples=1.0,n_jobs=4)
     clf.fit(X_train,y_train)
     X_test_scaler_2 = X_test.head(2500)
+    X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(20):
+    for n in range(10):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('Время выполнения',end_time-start_time)
@@ -862,8 +872,10 @@ def ada_boost():
     clf = AdaBoostClassifier(base_estimator=base_clf, algorithm='SAMME',learning_rate=0.05,n_estimators=50)
     clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
+    X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(5):
+    for n in range(10):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('Время выполнения', end_time - start_time)
@@ -876,8 +888,10 @@ def ada_boost():
     clf = AdaBoostClassifier(base_estimator=base_clf, n_estimators=50, algorithm='SAMME',learning_rate=0.05)
     clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(5):
+    for n in range(10):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('Время выполнения', end_time - start_time)
@@ -890,8 +904,10 @@ def ada_boost():
     clf = AdaBoostClassifier(base_estimator=base_clf, n_estimators=40, algorithm='SAMME.R',learning_rate=0.5)
     clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(5):
+    for n in range(10):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('Время выполнения', end_time - start_time)
@@ -1010,9 +1026,10 @@ def gradient_boost():
                                      subsample=0.5)
     clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
-
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time=timeit.default_timer()
-    for i in range(5):
+    for i in range(10):
         y_pred=clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print("время выполнения",end_time-start_time)
