@@ -345,8 +345,9 @@ def decision_tree():
     X_test_scaler_2 = X_test.head(2500)
     X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(10):
+    for n in range(20):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('время выполнения:', end_time-start_time)
@@ -419,8 +420,9 @@ def naive_bayes_bernoulli():
     X_test_scaler_2 = X_test.head(2500)
     X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(10):
+    for n in range(20):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('время выполнения:', end_time-start_time)
@@ -475,14 +477,13 @@ def naive_bayes_multinomial():
     recall_specificity_scoring_no_scaler(df_a, clf)
 
     clf = MultinomialNB()
-    X_train_scaler = scaler.fit_transform(X_train)
-    X_test_scaler = scaler.fit_transform(X_test)
     clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
     X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(10):
+    for n in range(20):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('время выполнения:', end_time - start_time)
@@ -679,7 +680,7 @@ def bagging():
     # ********************************************
     # Время бэггинга для K-ближайших соседй
     base_clf = KNeighborsClassifier(algorithm='kd_tree',n_neighbors=150)
-    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=50,max_samples=0.2,n_jobs=4)
+    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=50,max_samples=0.2,n_jobs=-1)
     clf.fit(X_train,y_train)
     X_test_scaler_2 = X_test.head(2500)
     start_time = timeit.default_timer()
@@ -693,13 +694,14 @@ def bagging():
     X_train_scaler = scaler.fit_transform(X_train)
     X_test_scaler =scaler.fit_transform(X_test)
     base_clf = BernoulliNB()
-    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=20,max_samples=0.5,n_jobs=4)
+    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=20,max_samples=0.5,n_jobs=-1)
     clf.fit(X_train,y_train)
     X_test_scaler_2 = X_test.head(2500)
     X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(10):
+    for n in range(20):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('Время выполнения',end_time-start_time)
@@ -707,13 +709,14 @@ def bagging():
     # ********************************************
     # Время бэггинга для полиномиального Наивного Байеса
     base_clf = MultinomialNB()
-    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=50,max_samples=0.02,n_jobs=4)
+    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=50,max_samples=0.02,n_jobs=-1)
     clf.fit(X_train,y_train)
     X_test_scaler_2 = X_test.head(2500)
     X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(10):
+    for n in range(20):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('Время выполнения',end_time-start_time)
@@ -721,13 +724,14 @@ def bagging():
     # ********************************************
     # Время бэггинга для дерева решений
     base_clf = DecisionTreeClassifier(max_depth=30,min_samples_split=12,min_samples_leaf=200)
-    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=50,max_samples=1.0,n_jobs=4)
+    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=50,max_samples=1.0,n_jobs=-1)
     clf.fit(X_train,y_train)
     X_test_scaler_2 = X_test.head(2500)
     X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(10):
+    for n in range(20):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('Время выполнения',end_time-start_time)
@@ -874,8 +878,9 @@ def ada_boost():
     X_test_scaler_2 = X_test.head(2500)
     X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(10):
+    for n in range(20):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('Время выполнения', end_time - start_time)
@@ -890,8 +895,9 @@ def ada_boost():
     X_test_scaler_2 = X_test.head(2500)
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(10):
+    for n in range(20):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('Время выполнения', end_time - start_time)
@@ -906,8 +912,9 @@ def ada_boost():
     X_test_scaler_2 = X_test.head(2500)
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
-    for n in range(10):
+    for n in range(20):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('Время выполнения', end_time - start_time)
@@ -968,7 +975,7 @@ def gradient_boost():
     k_subsample= [0.25,0.5,0.75,1.0]
 
     param_grid = dict(n_estimators=k_range, learning_rate=k_learning_rate, max_depth=k_max_depth,loss=k_loss,criterion=k_criterion,subsample=k_subsample)
-    grid = GridSearchCV(clf, param_grid, scoring='roc_auc',cv=4, verbose=3, return_train_score=True, n_jobs=-1)
+    grid = GridSearchCV(clf, param_grid, scoring='balanced_accuracy',cv=4, verbose=3, return_train_score=True, n_jobs=-1)
     grid_search = grid.fit(scaler.fit_transform(df_a.iloc[:, list(range(2, len(df_a.columns)))]), df_a['LABEL'])
     print(grid_search)
     print(grid_search.best_params_)
@@ -1028,8 +1035,9 @@ def gradient_boost():
     X_test_scaler_2 = X_test.head(2500)
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time=timeit.default_timer()
-    for i in range(10):
+    for i in range(20):
         y_pred=clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print("время выполнения",end_time-start_time)
