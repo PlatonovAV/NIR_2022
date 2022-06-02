@@ -19,12 +19,6 @@ NGRAM = (1, 1)
 N_JOBS = 6
 MIN_DF = 0.05
 
-def load_data():
-    work_path = Path.cwd()
-    df_a_path = Path(work_path, 'dataset\\clear\\step2', 'train.csv')
-    df_a = pd.read_csv(df_a_path, sep=',', index_col=0)
-    df_a.index.names = ["ID"]
-    return df_a
 
 
 def k_neighbors():

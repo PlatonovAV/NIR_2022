@@ -1,76 +1,20 @@
 import timeit
-from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier, AdaBoostClassifier, GradientBoostingClassifier
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.manifold import TSNE
-from sklearn.metrics import confusion_matrix, roc_curve, roc_auc_score
-from sklearn.model_selection import train_test_split, GridSearchCV, cross_validate
-from sklearn.naive_bayes import BernoulliNB, GaussianNB, MultinomialNB
+from sklearn.metrics import confusion_matrix, roc_curve
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.naive_bayes import BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.tree import DecisionTreeClassifier
-import time
+
+from support_functions import load_data, recall_specificity_scoring
 
 MAX_FEATURES = None
 N_JOBS = -1
-
-
-def recall_specificity_scoring(df_a, scaler, clf):
-    def confusion_matrix_scorer(clf, X, y):
-        y_pred = clf.predict(X)
-        cm = confusion_matrix(y, y_pred)
-        return {'tp': cm[0, 0], 'fn': cm[0, 1], 'fp': cm[1, 0], 'tn': cm[1, 1]}
-
-    cv_results = cross_validate(clf.fit(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL']),
-                                scaler.fit_transform(df_a.iloc[:, list(range(2, len(df_a.columns)))]), df_a["LABEL"],
-                                scoring=confusion_matrix_scorer)
-    recal = 0
-    specificit = 0
-    for n in range(len(cv_results['test_tp'])):
-        recal += cv_results['test_tp'][n] / (cv_results['test_tp'][n] + cv_results['test_fn'][n])
-        specificit += cv_results['test_tn'][n] / (cv_results['test_tn'][n] + cv_results['test_fp'][n])
-        print('полнота', cv_results['test_tp'][n] / (cv_results['test_tp'][n] + cv_results['test_fn'][n]))
-        print('специфичность', cv_results['test_tn'][n] / (cv_results['test_tn'][n] + cv_results['test_fp'][n]))
-        print()
-    recal = recal / len(cv_results['test_tp'])
-    specificit = specificit / len(cv_results['test_tp'])
-    print("******\n", "Полнота: ", recal, '\n', 'Специфичность: ', specificit, '\n*****\n')
-    print(cv_results)
-
-
-def recall_specificity_scoring_no_scaler(df_a, clf):
-    def confusion_matrix_scorer(clf, X, y):
-        y_pred = clf.predict(X)
-        cm = confusion_matrix(y, y_pred)
-        return {'tp': cm[0, 0], 'fn': cm[0, 1], 'fp': cm[1, 0], 'tn': cm[1, 1]}
-
-    cv_results = cross_validate(clf.fit(df_a.iloc[:, list(range(2, len(df_a.columns)))], df_a['LABEL']),
-                                (df_a.iloc[:, list(range(2, len(df_a.columns)))]), df_a["LABEL"],
-                                scoring=confusion_matrix_scorer)
-    recal = 0
-    specificit = 0
-    for n in range(len(cv_results['test_tp'])):
-        recal += cv_results['test_tp'][n] / (cv_results['test_tp'][n] + cv_results['test_fn'][n])
-        specificit += cv_results['test_tn'][n] / (cv_results['test_tn'][n] + cv_results['test_fp'][n])
-        print('полнота', cv_results['test_tp'][n] / (cv_results['test_tp'][n] + cv_results['test_fn'][n]))
-        print('специфичность', cv_results['test_tn'][n] / (cv_results['test_tn'][n] + cv_results['test_fp'][n]))
-        print()
-    recal = recal / len(cv_results['test_tp'])
-    specificit = specificit / len(cv_results['test_tp'])
-    print("******\n", 'Полнота: ', recal, '\n', 'Срецифичность: ', specificit, '\n*****\n')
-    print(cv_results)
-
-
-def load_data(txt):
-    work_path = Path.cwd()
-    df_a_path = Path(work_path, 'dataset\\clear\\step3', txt)
-    df_a = pd.read_csv(df_a_path, sep=',', index_col=0)
-    df_a.index.names = ["ID"]
-    return df_a
 
 
 def k_neighbors(txt):
@@ -125,7 +69,9 @@ def k_neighbors(txt):
     print()
 
     clf = KNeighborsClassifier(n_neighbors=300, algorithm='kd_tree', n_jobs=-1)
-    recall_specificity_scoring(df_a, scaler, clf)
+
+    a_scaler = RobustScaler()
+    recall_specificity_scoring(df_a, clf, a_scaler)
 
     print("Поиск оптимальных значений")
     knn = KNeighborsClassifier(algorithm="ball_tree")
@@ -161,16 +107,16 @@ def k_neighbors(txt):
         plt.ylabel('False Positive Rate')
         plt.legend()
 
-
     # вычисление времени выполнения
-    clf = KNeighborsClassifier(algorithm='kd_tree',n_neighbors=150)
-    clf.fit(X_train,y_train)
+    clf = KNeighborsClassifier(algorithm='kd_tree', n_neighbors=150)
+    clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
     start_time = timeit.default_timer()
-    for n in range(10):
+    for n in range(3):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
-    print('время выполнения:', end_time-start_time)
+    print('время выполнения:', end_time - start_time)
+
 
 def random_forest():
     # загрузка данных
@@ -300,7 +246,7 @@ def decision_tree():
 
     a_scaler = RobustScaler()
     clf = DecisionTreeClassifier(random_state=42, max_features=MAX_FEATURES)
-    recall_specificity_scoring(df_a, a_scaler, clf)
+    recall_specificity_scoring(df_a, clf, a_scaler)
 
     clf = DecisionTreeClassifier(random_state=42)
 
@@ -325,7 +271,8 @@ def decision_tree():
                                  min_samples_split=grid_search.best_params_['min_samples_split'],
                                  min_samples_leaf=grid_search.best_params_['min_samples_leaf'])
 
-    recall_specificity_scoring(df_a, scaler, clf)
+    a_scaler = RobustScaler()
+    recall_specificity_scoring(df_a, clf, a_scaler)
     print("Время выполнения: ", time_stop - time_start, "\nВремя в минутах: ", (time_stop - time_start) / 60)
 
     # roc_auc {'criterion': 'entropy', 'max_depth': 30, 'min_samples_leaf': 12, 'min_samples_split': 200}
@@ -340,17 +287,18 @@ def decision_tree():
     #  Специфичность:  0.8681640625
 
     # вычисление времени выполнения
-    clf = DecisionTreeClassifier(max_depth=30,min_samples_split=12,min_samples_leaf=200)
-    clf.fit(X_train,y_train)
+    clf = DecisionTreeClassifier(max_depth=30, min_samples_split=12, min_samples_leaf=200)
+    clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
-    X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
     for n in range(20):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
-    print('время выполнения:', end_time-start_time)
+    print('время выполнения:', end_time - start_time)
+
 
 def naive_bayes_bernoulli():
     # загрузка данных
@@ -397,7 +345,8 @@ def naive_bayes_bernoulli():
     print()
 
     clf = BernoulliNB()
-    recall_specificity_scoring(df_a, scaler, clf)
+    a_scaler = RobustScaler()
+    recall_specificity_scoring(df_a, clf, a_scaler)
 
     print("Поиск оптимальных значений")
     nb = BernoulliNB()
@@ -413,12 +362,13 @@ def naive_bayes_bernoulli():
     print("Accuracy for our training dataset with tuning is : {:.2f}%".format(accuracy))
 
     clf = BernoulliNB(alpha=grid_search.best_params_['alpha'], binarize=grid_search.best_params_['binarize'])
-    recall_specificity_scoring(df_a, scaler, clf)
+    a_scaler = RobustScaler()
+    recall_specificity_scoring(df_a, clf, a_scaler)
 
     clf = BernoulliNB()
-    clf.fit(X_train,y_train)
+    clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
-    X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
@@ -427,7 +377,8 @@ def naive_bayes_bernoulli():
     for n in range(20):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
-    print('время выполнения:', end_time-start_time)
+    print('время выполнения:', end_time - start_time)
+
 
 def naive_bayes_multinomial():
     # загрузка данных
@@ -462,7 +413,7 @@ def naive_bayes_multinomial():
     print()
 
     clf = MultinomialNB()
-    recall_specificity_scoring_no_scaler(df_a, clf)
+    recall_specificity_scoring(df_a, clf)
 
     print("Поиск оптимальных значений")
     nb = MultinomialNB()
@@ -476,12 +427,12 @@ def naive_bayes_multinomial():
     print("Accuracy for our training dataset with tuning is : {:.2f}%".format(accuracy))
 
     clf = MultinomialNB(alpha=grid_search.best_params_['alpha'])
-    recall_specificity_scoring_no_scaler(df_a, clf)
+    recall_specificity_scoring(df_a, clf)
 
     clf = MultinomialNB()
     clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
-    X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
@@ -491,6 +442,7 @@ def naive_bayes_multinomial():
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('время выполнения:', end_time - start_time)
+
 
 def nb_compare():
     # загрузка данных
@@ -683,62 +635,62 @@ def bagging():
 
     # ********************************************
     # Время бэггинга для K-ближайших соседй
-    base_clf = KNeighborsClassifier(algorithm='kd_tree',n_neighbors=150)
-    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=50,max_samples=0.2,n_jobs=-1)
-    clf.fit(X_train,y_train)
+    base_clf = KNeighborsClassifier(algorithm='kd_tree', n_neighbors=150)
+    clf = BaggingClassifier(base_estimator=base_clf, n_estimators=50, max_samples=0.2, n_jobs=-1)
+    clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
     start_time = timeit.default_timer()
     for n in range(10):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
-    print('Время выполнения',end_time-start_time)
+    print('Время выполнения', end_time - start_time)
 
     # ********************************************
     # Время бэггинга для Наивног Байеса Бернулли
     X_train_scaler = scaler.fit_transform(X_train)
-    X_test_scaler =scaler.fit_transform(X_test)
+    X_test_scaler = scaler.fit_transform(X_test)
     base_clf = BernoulliNB()
-    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=20,max_samples=0.5,n_jobs=-1)
-    clf.fit(X_train,y_train)
+    clf = BaggingClassifier(base_estimator=base_clf, n_estimators=20, max_samples=0.5, n_jobs=-1)
+    clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
-    X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
     for n in range(20):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
-    print('Время выполнения',end_time-start_time)
+    print('Время выполнения', end_time - start_time)
 
     # ********************************************
     # Время бэггинга для полиномиального Наивного Байеса
     base_clf = MultinomialNB()
-    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=50,max_samples=0.02,n_jobs=-1)
-    clf.fit(X_train,y_train)
+    clf = BaggingClassifier(base_estimator=base_clf, n_estimators=50, max_samples=0.02, n_jobs=-1)
+    clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
-    X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
     for n in range(20):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
-    print('Время выполнения',end_time-start_time)
+    print('Время выполнения', end_time - start_time)
 
     # ********************************************
     # Время бэггинга для дерева решений
-    base_clf = DecisionTreeClassifier(max_depth=30,min_samples_split=12,min_samples_leaf=200)
-    clf = BaggingClassifier(base_estimator=base_clf,n_estimators=50,max_samples=1.0,n_jobs=-1)
-    clf.fit(X_train,y_train)
+    base_clf = DecisionTreeClassifier(max_depth=30, min_samples_split=12, min_samples_leaf=200)
+    clf = BaggingClassifier(base_estimator=base_clf, n_estimators=50, max_samples=1.0, n_jobs=-1)
+    clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
-    X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
     for n in range(20):
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
-    print('Время выполнения',end_time-start_time)
+    print('Время выполнения', end_time - start_time)
 
 
 def ada_boost():
@@ -787,16 +739,16 @@ def ada_boost():
 
     print()
 
-    clf = AdaBoostClassifier( n_estimators=10, random_state=42)
+    clf = AdaBoostClassifier(n_estimators=10, random_state=42)
 
-    recall_specificity_scoring_no_scaler(df_a, clf)
+    recall_specificity_scoring(df_a, clf)
 
     print()
 
     print("Поиск оптимальных значений")
-    clf = AdaBoostClassifier(base_estimator=base_classifier,random_state=42)
-    k_range = [1,2,3,4,5, 10, 20, 30, 40, 50, 75, 100]
-    k_learning_rate = [0.01,0.02,0.03,0.04, 0.05, 0.1, 0.2, 0.3,0.4 ,0.5, 0.75, 1.0, 1.2, 1.5, 2.0]
+    clf = AdaBoostClassifier(base_estimator=base_classifier, random_state=42)
+    k_range = [1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 75, 100]
+    k_learning_rate = [0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1.0, 1.2, 1.5, 2.0]
     k_algorithm = ['SAMME', 'SAMME.R']
     param_grid = dict(n_estimators=k_range, learning_rate=k_learning_rate, algorithm=k_algorithm)
     grid = GridSearchCV(clf, param_grid, scoring='balanced_accuracy', verbose=3, return_train_score=True, n_jobs=-1)
@@ -806,12 +758,12 @@ def ada_boost():
     accuracy = grid_search.best_score_ * 100
     print("Accuracy for our training dataset with tuning is : {:.2f}%".format(accuracy))
 
-    clf = AdaBoostClassifier(base_estimator=base_classifier, random_state=42, n_estimators=grid_search.best_params_['n_estimators'],
+    clf = AdaBoostClassifier(base_estimator=base_classifier, random_state=42,
+                             n_estimators=grid_search.best_params_['n_estimators'],
                              learning_rate=grid_search.best_params_['learning_rate'],
                              algorithm=grid_search.best_params_['algorithm'])
 
-
-    recall_specificity_scoring_no_scaler(df_a,clf)
+    recall_specificity_scoring(df_a, clf)
 
     # Результаты работы алогритмов
     # (в скобках указаны значения полученные при оценке 'roc_auc')
@@ -841,7 +793,7 @@ def ada_boost():
     # ***************
     # Наивный Байес Бернулли
     # Параметры
-    #{'algorithm': 'SAMME', 'learning_rate': 0.05, 'n_estimators': 100} ({'algorithm': 'SAMME', 'learning_rate': 0.05, 'n_estimators': 100})
+    # {'algorithm': 'SAMME', 'learning_rate': 0.05, 'n_estimators': 100} ({'algorithm': 'SAMME', 'learning_rate': 0.05, 'n_estimators': 100})
     # Оценка
     # Проценты:
     # Полнота: 0,94 (94)
@@ -849,8 +801,8 @@ def ada_boost():
 
     plt.figure(figsize=(10, 10)).clf()
     for n in k_range:
-        clf = AdaBoostClassifier(base_estimator=base_classifier,n_estimators=n, random_state=42,
-                                 algorithm= 'SAMME.R',
+        clf = AdaBoostClassifier(base_estimator=base_classifier, n_estimators=n, random_state=42,
+                                 algorithm='SAMME.R',
                                  learning_rate=0.2)
         clf = base_classifier
         clf.fit(X_train, y_train)
@@ -871,16 +823,15 @@ def ada_boost():
         plt.legend()
         plt.show()
 
-
     # ********************************************
     # Время бустинга для Наивног Байеса Бернулли
     X_train_scaler = scaler.fit_transform(X_train)
     X_test_scaler = scaler.fit_transform(X_test)
     base_clf = BernoulliNB()
-    clf = AdaBoostClassifier(base_estimator=base_clf, algorithm='SAMME',learning_rate=0.05,n_estimators=50)
+    clf = AdaBoostClassifier(base_estimator=base_clf, algorithm='SAMME', learning_rate=0.05, n_estimators=50)
     clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
-    X_test_scaler_2 = pd.concat([X_test_scaler_2,X_test_scaler_2])
+    X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     start_time = timeit.default_timer()
@@ -894,7 +845,7 @@ def ada_boost():
     X_train_scaler = scaler.fit_transform(X_train)
     X_test_scaler = scaler.fit_transform(X_test)
     base_clf = MultinomialNB()
-    clf = AdaBoostClassifier(base_estimator=base_clf, n_estimators=50, algorithm='SAMME',learning_rate=0.05)
+    clf = AdaBoostClassifier(base_estimator=base_clf, n_estimators=50, algorithm='SAMME', learning_rate=0.05)
     clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
@@ -911,7 +862,7 @@ def ada_boost():
     X_train_scaler = scaler.fit_transform(X_train)
     X_test_scaler = scaler.fit_transform(X_test)
     base_clf = DecisionTreeClassifier(max_depth=30, min_samples_split=12, min_samples_leaf=200)
-    clf = AdaBoostClassifier(base_estimator=base_clf, n_estimators=40, algorithm='SAMME.R',learning_rate=0.5)
+    clf = AdaBoostClassifier(base_estimator=base_clf, n_estimators=40, algorithm='SAMME.R', learning_rate=0.5)
     clf.fit(X_train, y_train)
     X_test_scaler_2 = X_test.head(2500)
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
@@ -922,6 +873,7 @@ def ada_boost():
         y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
     print('Время выполнения', end_time - start_time)
+
 
 def gradient_boost():
     # загрузка данных
@@ -972,14 +924,16 @@ def gradient_boost():
     print("Поиск оптимальных значений")
     clf = GradientBoostingClassifier(random_state=42)
     k_range = [2, 5, 10, 25, 50, 75, 100]
-    k_learning_rate = [0.01,0.05, 0.1, 0.5, 1.0,2.0]
+    k_learning_rate = [0.01, 0.05, 0.1, 0.5, 1.0, 2.0]
     k_max_depth = [2, 4, 8, 16]
-    k_loss = ['log_loss','exponential']
-    k_criterion = ['friedman_mse','squared_error']
-    k_subsample= [0.25,0.5,0.75,1.0]
+    k_loss = ['log_loss', 'exponential']
+    k_criterion = ['friedman_mse', 'squared_error']
+    k_subsample = [0.25, 0.5, 0.75, 1.0]
 
-    param_grid = dict(n_estimators=k_range, learning_rate=k_learning_rate, max_depth=k_max_depth,loss=k_loss,criterion=k_criterion,subsample=k_subsample)
-    grid = GridSearchCV(clf, param_grid, scoring='balanced_accuracy',cv=4, verbose=3, return_train_score=True, n_jobs=-1)
+    param_grid = dict(n_estimators=k_range, learning_rate=k_learning_rate, max_depth=k_max_depth, loss=k_loss,
+                      criterion=k_criterion, subsample=k_subsample)
+    grid = GridSearchCV(clf, param_grid, scoring='balanced_accuracy', cv=4, verbose=3, return_train_score=True,
+                        n_jobs=-1)
     grid_search = grid.fit(scaler.fit_transform(df_a.iloc[:, list(range(2, len(df_a.columns)))]), df_a['LABEL'])
     print(grid_search)
     print(grid_search.best_params_)
@@ -994,7 +948,7 @@ def gradient_boost():
                                      loss=grid_search.best_params_['loss'],
                                      criterion=grid_search.best_params_['criterion'],
                                      subsample=grid_search.best_params_['subsample'])
-    recall_specificity_scoring(df_a,a_scaler,clf)
+    recall_specificity_scoring(df_a, clf,a_scaler)
     # {'criterion': 'friedman_mse', 'learning_rate': 0.1, 'loss': 'exponential', 'max_depth': 16, 'n_estimators': 100, 'subsample': 0.5}
     # ******
     #  Полнота:  0.9347384869932899
@@ -1008,7 +962,7 @@ def gradient_boost():
                 clf = GradientBoostingClassifier(n_estimators=n, random_state=42, learning_rate=m, max_depth=k,
                                                  max_features=MAX_FEATURES)
 
-                clf = DecisionTreeClassifier(max_depth=30,min_samples_leaf=200,min_samples_split=12)
+                clf = DecisionTreeClassifier(max_depth=30, min_samples_leaf=200, min_samples_split=12)
                 clf.fit(X_train_scaler, y_train)
                 y_pred = clf.predict(X_test_scaler)
                 quality = confusion_matrix(y_test, y_pred)
@@ -1042,8 +996,8 @@ def gradient_boost():
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
     X_test_scaler_2 = pd.concat([X_test_scaler_2, X_test_scaler_2])
-    start_time=timeit.default_timer()
+    start_time = timeit.default_timer()
     for i in range(20):
-        y_pred=clf.predict(X_test_scaler_2)
+        y_pred = clf.predict(X_test_scaler_2)
     end_time = timeit.default_timer()
-    print("время выполнения",end_time-start_time)
+    print("время выполнения", end_time - start_time)
