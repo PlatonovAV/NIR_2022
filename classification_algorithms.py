@@ -14,6 +14,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
+from support_functions import load_data
+
 MAX_FEATURES = None
 NGRAM = (1, 1)
 N_JOBS = 6
