@@ -8,8 +8,10 @@ from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.neighbors import KNeighborsClassifier
 from wordcloud import WordCloud, STOPWORDS
-from classification_algorithms import load_data
 import seaborn as sns
+
+from support_functions import load_data
+
 
 def bag_of_words_vizualizer():
     # загрузка данных из файла
