@@ -1,5 +1,6 @@
 import timeit
 
+import joblib
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -10,7 +11,7 @@ from sklearn.naive_bayes import BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.tree import DecisionTreeClassifier
-
+import pickle
 from support_functions import load_data, recall_specificity_scoring
 
 MAX_FEATURES = None
@@ -74,7 +75,7 @@ def k_neighbors(txt):
     recall_specificity_scoring(df_a, clf, a_scaler)
 
     print("Поиск оптимальных значений")
-    knn = KNeighborsClassifier(algorithm="ball_tree")
+    knn = KNeighborsClassifier()
     a_scaler = RobustScaler()
     k_range = [10, 20, 50, 100, 150, 200, 250, 300, 400]
     k_alg = ['ball_tree', 'kd_tree', 'brute']
@@ -443,6 +444,11 @@ def naive_bayes_multinomial():
     end_time = timeit.default_timer()
     print('время выполнения:', end_time - start_time)
 
+    clf = MultinomialNB(alpha=0.015)
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+
+    joblib.dump(clf, 'MultinomialNB.pkl')
 
 def nb_compare():
     # загрузка данных
