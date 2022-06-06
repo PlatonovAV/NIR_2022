@@ -1,5 +1,4 @@
 from pathlib import Path
-
 import joblib
 import nltk
 import pandas as pd
@@ -8,29 +7,14 @@ from nltk import RegexpTokenizer
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import CountVectorizer
 
-
-
 nltk.download('averaged_perceptron_tagger')
 nltk.download('stopwords')
 work_path = Path.cwd()
 df_a_path = Path(work_path, 'dataset\\tested', 'test.csv')
 
-
 # импорт данных
 df_a = pd.read_csv(df_a_path, sep=',')
 txt = df_a['ABSTRACT'][0]
-
-txt = '  We present novel understandings of the Gamma-Poisson (GaP) model, a\r\n' \
-      'probabilistic matrix factorization model for count data. We show that GaP can\r\n' \
-      'be rewritten free of the score/activation matrix. This gives us new insights\r\n' \
-      'about the estimation of the topic/dictionary matrix by maximum marginal\r\n' \
-      'likelihood estimation. In particular, this explains the robustness of this\r\n' \
-      'estimator to over-specified values of the factorization rank, especially its\r\n' \
-      'ability to automatically prune irrelevant dictionary columns, as empirically\r\n' \
-      'observed in previous work. The marginalization of the activation matrix leads\r\n' \
-      'in turn to a new Monte Carlo Expectation-Maximization algorithm with favorable\r\n' \ 
-      'properties.\r\n'
-
 
 # Удаление ненужных столбцов
 df_a.drop(['ID'], axis=1, inplace=True)
@@ -58,24 +42,22 @@ df_a['ABSTRACT'] = df_a['ABSTRACT'].apply(lambda x: " ".join([token.lemma_ for t
 
 vectorizer1 = CountVectorizer(ngram_range=(1, 1))
 X_df = vectorizer1.fit_transform(df_a["ABSTRACT"])
-count_vect= pd.DataFrame(X_df.todense(), columns=vectorizer1.get_feature_names_out(), index=df_a.index)
+count_vect = pd.DataFrame(X_df.todense(), columns=vectorizer1.get_feature_names_out(), index=df_a.index)
 df_a = pd.concat([df_a, count_vect], axis=1, join='inner')
 
-clf =joblib.load('MultinomialNB.pkl')
+clf = joblib.load('MultinomialNB.pkl')
 df_tmp = pd.DataFrame()
 for n in list(clf.feature_names_in_):
     if n not in df_tmp.columns:
         df_tmp = df_tmp.copy()
-        df_tmp[n]= 0
+        df_tmp[n] = 0
 for n in df_tmp.columns:
     if n in df_a.columns:
         df_tmp[n] = df_a[n]
 
 df_a = df_tmp.copy()
-df_a= df_a.fillna(0)
-y_pred=clf.predict(df_a)
+df_a = df_a.fillna(0)
+y_pred = clf.predict(df_a)
 
 for n in range(len(y_pred)):
-    print("Класс текста - ",y_pred[n])
-
-
+    print("Класс текста - ", y_pred[n])
