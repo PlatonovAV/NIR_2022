@@ -1,5 +1,4 @@
 import timeit
-
 import joblib
 import numpy as np
 import pandas as pd
@@ -11,13 +10,12 @@ from sklearn.naive_bayes import BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.tree import DecisionTreeClassifier
-import pickle
 from support_functions import load_data, recall_specificity_scoring
 
-MAX_FEATURES = None
-N_JOBS = -1
+MAX_FEATURES = None # максимальное количество признаков
+N_JOBS = -1 # количество потоков
 
-
+# метод k-ближайших соседей
 def k_neighbors(txt):
     # загрузка данных
     df_a = load_data('train_v1.csv')
@@ -118,7 +116,7 @@ def k_neighbors(txt):
     end_time = timeit.default_timer()
     print('время выполнения:', end_time - start_time)
 
-
+# случайный лес
 def random_forest():
     # загрузка данных
     df_a = load_data('train_v1.csv')
@@ -199,7 +197,7 @@ def random_forest():
         plt.ylabel('False Positive Rate')
         plt.legend()
 
-
+# дерево решений
 def decision_tree():
     # загрузка данных
     df_a = load_data('train_v1.csv')
@@ -300,7 +298,7 @@ def decision_tree():
     end_time = timeit.default_timer()
     print('время выполнения:', end_time - start_time)
 
-
+# наивный байес бернулли
 def naive_bayes_bernoulli():
     # загрузка данных
     df_a = load_data('train_v1.csv')
@@ -380,7 +378,7 @@ def naive_bayes_bernoulli():
     end_time = timeit.default_timer()
     print('время выполнения:', end_time - start_time)
 
-
+# полиномиальный наивный байес
 def naive_bayes_multinomial():
     # загрузка данных
     df_a = load_data('train_v1.csv')
@@ -450,6 +448,7 @@ def naive_bayes_multinomial():
 
     joblib.dump(clf, 'MultinomialNB.pkl')
 
+# сравнение модификаций наивного байеса
 def nb_compare():
     # загрузка данных
     df_a = load_data('train_v1.csv')
@@ -507,7 +506,7 @@ def nb_compare():
     plt.ylabel('False Positive Rate')
     plt.legend()
 
-
+# бэггинг
 def bagging():
     # загрузка данных
     df_a = load_data('train_v1.csv')
@@ -698,7 +697,7 @@ def bagging():
     end_time = timeit.default_timer()
     print('Время выполнения', end_time - start_time)
 
-
+# адаптивный бустинг
 def ada_boost():
     # загрузка данных
     df_a = load_data('train_v1.csv')
@@ -880,7 +879,7 @@ def ada_boost():
     end_time = timeit.default_timer()
     print('Время выполнения', end_time - start_time)
 
-
+# градиентный бустинг
 def gradient_boost():
     # загрузка данных
     df_a = load_data('train_v1.csv')
