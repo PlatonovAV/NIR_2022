@@ -1,12 +1,8 @@
 import timeit
-from pathlib import Path
 import numpy as np
-import pandas as pd
 from matplotlib import pyplot as plt
-from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier, AdaBoostClassifier, GradientBoostingClassifier
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.manifold import TSNE
+from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import confusion_matrix, roc_curve
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.naive_bayes import BernoulliNB, GaussianNB
@@ -20,7 +16,6 @@ MAX_FEATURES = None
 NGRAM = (1, 1)
 N_JOBS = 6
 MIN_DF = 0.05
-
 
 
 def k_neighbors():
