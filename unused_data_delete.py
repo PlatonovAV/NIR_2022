@@ -1,15 +1,11 @@
-
 import pathlib
-
 from pathlib import Path
-
 import pandas as pd
 
 
 # удаление текстов, принадлежащих не рассматриваемым категориям
 
 def unused_data_delete():
-
     # загрузка данных
     work_path = pathlib.Path.cwd()
     df_a_path = Path(work_path, 'dataset\\clear\\step1', 'train.csv')
@@ -27,7 +23,8 @@ def unused_data_delete():
     for index, row in df_a.iterrows():
         if row['Computer Science'] == 1 and row['Physics'] == 0 and row['Mathematics'] == 0 and row['Statistics'] == 0:
             df_a.loc[index, "LABEL"] = "Computer Science"
-        elif row['Computer Science'] == 0 and row['Physics'] == 1 and row['Mathematics'] == 0 and row['Statistics'] == 0:
+        elif row['Computer Science'] == 0 and row['Physics'] == 1 and row['Mathematics'] == 0 and row[
+            'Statistics'] == 0:
             df_a.loc[index, "LABEL"] = "Physics"
         # elif row[0] == 0 and row[1]==0 and row[2]==1 and row[3]==0:
         #    df_a.loc[index, "LABEL"] = "Mathematics"
