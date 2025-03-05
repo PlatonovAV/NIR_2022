@@ -4,38 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9011605c-c1a8-4665-a261-f7c28727e80e" name="Changes" comment="123">
-      <change beforePath="$PROJECT_DIR$/.idea/NIR_2022.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/NIR_2022.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_01_06_2022_9_27_[Changes]/shelved.patch" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_01_06_2022_9_27__Changes_.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Application.py" beforeDir="false" afterPath="$PROJECT_DIR$/Application.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classification_algorithms.py" beforeDir="false" afterPath="$PROJECT_DIR$/classification_algorithms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/classification_algorithms_for_v3_test_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/classification_algorithms_for_v3_test_data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/clear_dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/clear_dataset.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/clear/step1/step1.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/clear/step1/train.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/clear/step2/step2.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/clear/step2/train.csv" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/clear/step2/train.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/clear/step3/step3.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/clear/step3/train_v1.csv" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/clear/step3/train_v1.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/clear/step3/train_v2.csv" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/clear/step3/train_v2.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/clear/step3/train_v3.csv" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/clear/step3/train_v3.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/clear/step4/step4.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/clear/step5/step5.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/clear/step6/step6.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/clear/step7/step7.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/clear/step8/step8.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/clear/step9/step9.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/feature_extration.py" beforeDir="false" afterPath="$PROJECT_DIR$/feature_extration.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/foo.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/support_functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/support_functions.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/unused_data_delete.py" beforeDir="false" afterPath="$PROJECT_DIR$/unused_data_delete.py" afterDir="false" />
-    </list>
+    <list default="true" id="9011605c-c1a8-4665-a261-f7c28727e80e" name="Changes" comment="lib update + refactor" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -164,7 +133,31 @@
       <option name="project" value="LOCAL" />
       <updated>1654066865997</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="lib update + refactor">
+      <option name="closed" value="true" />
+      <created>1741167432824</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1741167432824</updated>
+    </task>
+    <task id="LOCAL-00007" summary="lib update + refactor">
+      <option name="closed" value="true" />
+      <created>1741167449382</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1741167449382</updated>
+    </task>
+    <task id="LOCAL-00008" summary="lib update + refactor">
+      <option name="closed" value="true" />
+      <created>1741167457938</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1741167457938</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -180,6 +173,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="123" />
-    <option name="LAST_COMMIT_MESSAGE" value="123" />
+    <MESSAGE value="lib update + refactor" />
+    <option name="LAST_COMMIT_MESSAGE" value="lib update + refactor" />
   </component>
 </project>
