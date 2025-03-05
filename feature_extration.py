@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import mglearn as mglearn
 import numpy as np
 import pandas as pd
@@ -15,19 +16,18 @@ def bag_of_words_vizualizer():
     # загрузка данных из файла
     work_path = Path.cwd()
     df_a_path = Path(work_path, 'dataset\\clear\\step2', 'train.csv')
-    df_final_path = Path(work_path, 'dataset\\clear\\step3', 'train.csv')
     df_a = pd.read_csv(df_a_path, sep=',', index_col=0)
     df_a.index.names = ["ID"]
 
     vectorizer = CountVectorizer(ngram_range=(2, 2), max_features=10000, min_df=0.01, max_df=0.7)
-    X_physics = vectorizer.fit_transform(df_a["ABSTRACT"])
-    count_vect_df = pd.DataFrame(X_physics.todense(), columns=vectorizer.get_feature_names_out(), index=df_a.index)
+    x_physics = vectorizer.fit_transform(df_a["ABSTRACT"])
+    count_vect_df = pd.DataFrame(x_physics.todense(), columns=vectorizer.get_feature_names_out(), index=df_a.index)
     count_vect_df = count_vect_df.T
     count_vect_df["TOTAL"] = count_vect_df.sum(axis=1)
     feature_names = np.array(vectorizer.get_feature_names_out())
     # df_a_2 = pd.concat([df_a, count_vect_df], axis=1, join='inner')
     dictionary = dict(zip(count_vect_df.index, count_vect_df["TOTAL"]))
-    wordCloud = WordCloud(background_color='white',
+    word_cloud = WordCloud(background_color='white',
                           stopwords=STOPWORDS,
                           width=2000,
                           height=2000,
@@ -36,7 +36,7 @@ def bag_of_words_vizualizer():
                           ).generate_from_frequencies(dictionary)
     plt.figure(figsize=(20, 20))
     plt.subplot(1, 1, 1)
-    plt.imshow(wordCloud)
+    plt.imshow(word_cloud)
     plt.axis('off')
     plt.savefig('foo.png')
 
@@ -129,7 +129,6 @@ def extr():
     df_a = pd.read_csv(df_a_path, sep=',', index_col=0)
     df_a.index.names = ["ID"]
     fig1 = dict.fromkeys(list(df_a.columns)[1:])
-    n = 'use'
     for n in df_a.columns[2:20]:
         fig1[n] = plt.subplots(1)
         sns.set_theme(style="whitegrid")
@@ -139,20 +138,20 @@ def extr():
         fig1[n] = df_a[n].hist(figsize=(10, 10)).get_figure()
         # отсечение выбросов
         r = df_a[n].quantile(0.75) - df_a[n].quantile(0.25)
-        max = df_a[n].quantile(0.75) + (1.5 * r)
-        min = df_a[n].quantile(0.25) - (1.5 * r)
-        plt.axvline(x=max, color='red')
-        plt.axvline(x=min, color='red')
+        maximum = df_a[n].quantile(0.75) + (1.5 * r)
+        minimum = df_a[n].quantile(0.25) - (1.5 * r)
+        plt.axvline(x=maximum, color='red')
+        plt.axvline(x=minimum, color='red')
         plt.xlabel(n)
         plt.ylabel('Частота')
 
 
 def str_corpus(corpus):
-    str_corpus = ''
+    corp = ''
     for i in corpus:
-        str_corpus += ' ' + i
-    str_corpus = str_corpus.strip()
-    return str_corpus
+        corp += ' ' + i
+    corp = corp.strip()
+    return corp
 
 
 def get_corpus(data):
@@ -163,29 +162,29 @@ def get_corpus(data):
     return corpus
 
 
-def get_wordCloud(corpus):
-    wordCloud = WordCloud(background_color='white',
-                          stopwords=STOPWORDS,
-                          width=2000,
-                          height=2000,
-                          max_words=200,
-                          random_state=42
-                          ).generate_from_frequencies()
-    return wordCloud
+def get_word_cloud(corpus):
+    word_cloud = WordCloud(background_color='white',
+                           stopwords=STOPWORDS,
+                           width=2000,
+                           height=2000,
+                           max_words=200,
+                           random_state=42
+                           ).generate_from_frequencies(corpus)
+    return word_cloud
 
 
-def knn_vizualizer():
+def knn_vizualizer(file_name):
     mglearn.plots.plot_knn_classification(n_neighbors=3)
 
     # загрузка данных
-    df_a = load_data()
-    X, y = mglearn.datasets.make_forge()
+    df_a = load_data(file_name)
+    x, y = mglearn.datasets.make_forge()
     fig, axes = plt.subplots(1, 3, figsize=(10, 3))
     for n_neighbors, ax in zip([1, 3, 5], axes):
         # создаем объект-классификатор и подгоняем в одной строке
-        clf = KNeighborsClassifier(n_neighbors=n_neighbors).fit(X, y)
-        mglearn.plots.plot_2d_separator(clf, X, fill=True, eps=0.5, ax=ax, alpha=.4)
-        mglearn.discrete_scatter(X[:, 0], X[:, 1], ax=ax)
+        clf = KNeighborsClassifier(n_neighbors=n_neighbors).fit(x, y)
+        mglearn.plots.plot_2d_separator(clf, x, fill=True, eps=0.5, ax=ax, alpha=.4)
+        mglearn.discrete_scatter(x[:, 0], x[:, 1], ax=ax)
         ax.set_title("количество соседей:{}".format(n_neighbors))
         ax.set_xlabel("признак 0")
         ax.set_ylabel("признак 1")
